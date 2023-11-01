@@ -6,7 +6,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="/Users/azmihasan/Downloads/depencency.zip"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jpa-eclipselink-2.7">
 		<attributes>
 			<attribute name="module" value="true"/>
