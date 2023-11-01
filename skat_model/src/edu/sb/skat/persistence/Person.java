@@ -2,21 +2,41 @@ package edu.sb.skat.persistence;
 
 import java.util.Set;
 
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
 import edu.sb.skat.util.HashCodes;
 
+import javax.persistence.Embeddable;
+import javax.persistence.Entity;
+import javax.persistence.PrimaryKeyJoinColumn;
+import javax.persistence.Table;
+
+@Entity
+@Table(schema = "skat", name = "Person")
+@PrimaryKeyJoinColumn(name = "personId")
+@DiscriminatorValue("Person")
 public class Person extends BaseEntity{
 
 	public enum Group{
 		USER,
 		ADMIN
 	}
-
+	
+	@Embeddable
 	public class Name implements Comparable<BaseEntity>{
 
 		private String title;
 		private String family;
 		private String given;
-
+		
+		protected Name () {
+			
+		}
+		
 		public Name(String title, String family, String given) {
 			this.title = title;
 			this.family = family;
@@ -49,78 +69,107 @@ public class Person extends BaseEntity{
 		}
 	}
 	
-		public class Address implements Comparable<BaseEntity>{
-
-			private String street;
-			private String postcode;
-			private String city;
-			private String country;
-
-			public Address(String street, String postcode, String city, String country) {
-				this.street = street;
-				this.postcode = postcode;
-				this.city = city;
-				this.country = country;
-			}
-
-			public String getStreet() {
-				return street;
-			}
-
-			public void setStreet(String street) {
-				this.street = street;
-			}
-
-			public String getPostcode() {
-				return postcode;
-			}
-
-			public void setPostcode(String postcode) {
-				this.postcode = postcode;
-			}
-
-			public String getCity() {
-				return city;
-			}
-
-			public void setCity(String city) {
-				this.city = city;
-			}
-
-			public String getCountry() {
-				return country;
-			}
-
-			public void setCountry(String country) {
-				this.country = country;
-			}
-
-			@Override
-			public int compareTo(BaseEntity o) {
-				// TODO Auto-generated method stub
-				return 0;
-			}
+	@Embeddable
+	public class Address implements Comparable<BaseEntity>{
+		
+		private String street;
+		
+		@Pattern(regexp = "^[0-9]{5}(?:-[0-9]{4})?$", message = "Invalid postal code format")
+		private String postcode;
+		
+		private String city;
+		private String country;
+		
+		protected Address () {
+			
+		}
+		
+		public Address(String street, String postcode, String city, String country) {
+			this.street = street;
+			this.postcode = postcode;
+			this.city = city;
+			this.country = country;
 		}
 
+		public String getStreet() {
+			return street;
+		}
+
+		public void setStreet(String street) {
+			this.street = street;
+		}
+
+		public String getPostcode() {
+			return postcode;
+		}
+
+		public void setPostcode(String postcode) {
+			this.postcode = postcode;
+		}
+
+		public String getCity() {
+			return city;
+		}
+
+		public void setCity(String city) {
+			this.city = city;
+		}
+
+		public String getCountry() {
+			return country;
+		}
+
+		public void setCountry(String country) {
+			this.country = country;
+		}
+
+		@Override
+		public int compareTo(BaseEntity o) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+	}
+	
+	@NotNull
+	@Email
+	@Column(nullable = true, updatable = true, insertable = true, length=128)
 	private String email;
-	private HashCodes passwordHash;
+	
+	private String passwordHash;
+	
+	static private final String DEFAULT_PASSWORD_HASH = HashCodes.sha2HashText(256, "password");
+	
 	private Group group;
 	private long balance;
 	private Name name;
 	private Address address;
-	private String phones;
+	
+	@Pattern(regexp = "\\d{3}-\\d{3}-\\d{4}", message = "Invalid phone number format")
+	@Column(name = "phone", nullable = false, updatable = true)
+	private Set<String> phones;
+	
 	private Document avatar;
+	
+	@Column(nullable = true, updatable = true, insertable = true)
 	private SkatTable table;
+	
+	@NotNull 
+	@Column(nullable = true, updatable = true, insertable = true)
 	private byte tablePosition;
+	
+	@Column(nullable = false, updatable = false, insertable = true)
 	private Set<NetworkNegotiation> negotiations;
 	
 	protected Person() {
-		super();
+		this.group = Group.USER;
+		this.passwordHash = DEFAULT_PASSWORD_HASH;
+		this.name = new Name();
+		this.address = new Address();
 		
 	}
 
-	public Person(String email, HashCodes passwordHash, Group group, long balance, Name name, Address address, String phones, Document avatar, SkatTable table, byte tablePosition, Set<NetworkNegotiation> negotiations) {
-		super();
+	public Person(String email, String passwordHash, Group group, long balance, Name name, Address address, Set<String> phones, Document avatar, SkatTable table, byte tablePosition, Set<NetworkNegotiation> negotiations) {
+		
 		this.email = email;
 		this.passwordHash = passwordHash;
 		this.group = group;
@@ -142,11 +191,11 @@ public class Person extends BaseEntity{
 		this.email = email;
 	}
 
-	public HashCodes getPasswordHash() {
+	public String getPasswordHash() {
 		return passwordHash;
 	}
 
-	public void setPasswordHash(HashCodes passwordHash) {
+	public void setPasswordHash(String passwordHash) {
 		this.passwordHash = passwordHash;
 	}
 
@@ -182,11 +231,11 @@ public class Person extends BaseEntity{
 		this.address = address;
 	}
 
-	public String getPhones() {
+	public Set<String> getPhones() {
 		return phones;
 	}
 
-	protected void setPhones(String phones) {
+	protected void setPhones(Set<String> phones) {
 		this.phones = phones;
 	}
 

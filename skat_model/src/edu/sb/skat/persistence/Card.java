@@ -1,5 +1,15 @@
 package edu.sb.skat.persistence;
 
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.PrimaryKeyJoinColumn;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+
+@Entity
+@Table(schema = "skat", name = "Card")
+@PrimaryKeyJoinColumn(name = "cardId")
+@DiscriminatorValue("Card")
 public class Card extends BaseEntity{
 
 	public enum Suit{
@@ -19,8 +29,11 @@ public class Card extends BaseEntity{
 	    KING,
 	    ACE
 	}
-
+	
+	@NotNull
 	private Suit suit;
+	
+	@NotNull
 	private Rank rank;
 	
 	protected Card() {

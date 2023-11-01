@@ -2,13 +2,33 @@ package edu.sb.skat.persistence;
 
 import java.util.Set;
 
-public class Hand{
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Embeddable;
+import javax.persistence.Entity;
+import javax.persistence.PrimaryKeyJoinColumn;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+
+
+@Entity
+@Table(schema = "skat", name = "Hand")
+@PrimaryKeyJoinColumn(name = "handId")
+@DiscriminatorValue("Hand")
+public class Hand extends BaseEntity{
 
 	private Game game;
+	
 	private Person player;
+	
+	@NotNull
 	private Set<Card> cards;
+	
 	private Boolean solo;
+	
+	@NotNull
 	private short points;
+	
+	@NotNull
 	private short bid;
 	
 	protected Hand() {

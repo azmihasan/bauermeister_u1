@@ -2,7 +2,16 @@ package edu.sb.skat.persistence;
 
 import java.util.Set;
 
-public class SkatTable{
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.PrimaryKeyJoinColumn;
+import javax.persistence.Table;
+
+@Entity
+@Table(schema = "skat", name = "SkatTable")
+@PrimaryKeyJoinColumn(name = "skatTableId")
+@DiscriminatorValue("SkatTable")
+public class SkatTable extends BaseEntity{
     private String alias;
     private Document avatar;
     private Set<Person> players;
