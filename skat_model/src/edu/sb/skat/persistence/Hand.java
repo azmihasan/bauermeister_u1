@@ -21,21 +21,21 @@ import javax.validation.constraints.NotNull;
 public class Hand extends BaseEntity{
 	
 	@ManyToOne (optional = false)
-	@JoinColumn(name="gameReference", nullable = false, updatable = false, insertable = true)
+	@JoinColumn(name="handId", nullable = false, updatable = false, insertable = true)
 	private Game game;
 	
 	@ManyToOne (optional = false)
-	@JoinColumn(name="handReference", nullable = false, updatable = false, insertable = true)
+	@JoinColumn(name="handId", nullable = false, updatable = false, insertable = true)
 	private Person player;
 	
 	@NotNull
 	@ManyToMany
 	@JoinTable(
 			schema = "skat",
-			name = "Association",
-			joinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "handReference"),
-			inverseJoinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "cardReference"),
-			uniqueConstraints = @UniqueConstraint(columnNames = { "handReference", "cardReference" })
+			name = "Hand",
+			joinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "handId"),
+			inverseJoinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "handId"),
+			uniqueConstraints = @UniqueConstraint(columnNames = { "handId", "cardId" })
 		)
 	private Set<Card> cards;
 	
