@@ -4,6 +4,7 @@ import java.util.Set;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -20,7 +21,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(schema = "skat", name = "Game")
-@PrimaryKeyJoinColumn(name = "gameId")
+@PrimaryKeyJoinColumn(name = "gameIdentity")
 @DiscriminatorValue("Game")
 public class Game extends BaseEntity{
     
@@ -38,31 +39,31 @@ public class Game extends BaseEntity{
     
     @NotNull
     @ManyToOne
-    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @JoinColumn(name="gameIdentity", nullable=false, updatable=false)
     @Column(nullable=false, updatable=false, insertable=true)
     private SkatTable table;
     
     @NotNull
-    @OneToMany(mappedBy="Game")
+    @OneToMany(mappedBy="Game", cascade= {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH})
     @ElementCollection
-    @CollectionTable(name = "game_hands", joinColumns = @JoinColumn(name = "gameId"))
+    @CollectionTable(name = "game_hands", joinColumns = @JoinColumn(name = "gameIdentity"))
     private Set<Hand> hands;
     
     @Valid
     @ManyToOne
-    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @JoinColumn(name="gameIdentity", nullable=false, updatable=false)
     @Column(nullable=true)
     private Card leftTrickCard;
     
     @Valid
     @ManyToOne
-    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @JoinColumn(name="gameIdentity", nullable=false, updatable=false)
     @Column(nullable=true)
     private Card middleTrickCard;
     
     @Valid
     @ManyToOne
-    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @JoinColumn(name="gameIdentity", nullable=false, updatable=false)
     @Column(nullable=true)
     private Card rightTrickCard;
 
