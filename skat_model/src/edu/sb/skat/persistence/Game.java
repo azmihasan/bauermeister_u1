@@ -2,10 +2,16 @@ package edu.sb.skat.persistence;
 
 import java.util.Set;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 
@@ -14,32 +20,51 @@ import javax.persistence.Table;
 @PrimaryKeyJoinColumn(name = "gameId")
 @DiscriminatorValue("Game")
 public class Game extends BaseEntity{
-    public enum State {
+    
+	public enum State {
     	DEAL,
     	NEGOTIATE,
     	ACTIVE,
     	DONE
     }
-
+    
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable=false)
     private State state;
     
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @Column(nullable=false, updatable=false, insertable=true)
     private SkatTable table;
     
     @NotNull
+    @OneToMany(mappedBy="Game")
+    @Column(nullable=false, updatable=false, insertable=true)
     private Set<Hand> hands;
     
-    @Size(min=0, max=1)
+    @Valid
+    @ManyToOne
+    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @Column(nullable=true)
     private Card leftTrickCard;
     
-    @Size(min=0, max=1)
+    @Valid
+    @ManyToOne
+    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @Column(nullable=true)
     private Card middleTrickCard;
     
-    @Size(min=0, max=1)
+    @Valid
+    @ManyToOne
+    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @Column(nullable=true)
     private Card rightTrickCard;
 
     protected Game() {
     	super();
-    	this.state = State.DEAL;
+    	this.table = new SkatTable();
     }
     
     public Game(State state, SkatTable table, Set<Hand> hands, Card leftTrickCard, Card middleTrickCard, Card rightTrickCard){
