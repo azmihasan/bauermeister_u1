@@ -12,7 +12,7 @@ import org.eclipse.persistence.annotations.CacheIndex;
 
 @Entity
 @Table(schema = "skat", name = "Document")
-@PrimaryKeyJoinColumn(name = "documentId")
+@PrimaryKeyJoinColumn(name = "documentIdentity")
 @DiscriminatorValue("Document")
 public class Document extends BaseEntity{
 	
