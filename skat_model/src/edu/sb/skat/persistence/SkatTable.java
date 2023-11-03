@@ -12,6 +12,7 @@ import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 import javax.persistence.JoinTable;
 import javax.persistence.ElementCollection;
+import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 
 import javax.validation.constraints.Max;
@@ -27,21 +28,21 @@ public class SkatTable extends BaseEntity{
 	private String alias;
     
 	@ManyToOne (optional = false)
-	@JoinColumn(name="skatTableId", nullable = false, updatable = false, insertable = true)
+	@JoinColumn(name="skatTableIdentity", nullable = false, updatable = false, insertable = true)
 	private Document avatar;
     
 	@Min(value = 0)
 	@Max (value = 6)
 	@ElementCollection
 	@CollectionTable
-	@OneToMany(mappedBy = "table")
-	@JoinTable(name = "personId")
+	@OneToMany(mappedBy = "table", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH})
+	@JoinTable(name = "personIdentity")
 	private Set<Person> players;
 
 	@ElementCollection
 	@CollectionTable
-	@OneToMany(mappedBy = "table")
-	@JoinTable(name = "gameId")
+	@OneToMany(mappedBy = "table", cascade = {CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH})
+	@JoinTable(name = "gameIdentity")
 	private Set<Game> games;
     
 	@Column(nullable = false, updatable = true)
