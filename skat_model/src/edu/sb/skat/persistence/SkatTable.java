@@ -2,25 +2,42 @@ package edu.sb.skat.persistence;
 
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 
 @Entity
 @Table(schema = "skat", name = "SkatTable")
 @PrimaryKeyJoinColumn(name = "skatTableId")
 @DiscriminatorValue("SkatTable")
 public class SkatTable extends BaseEntity{
-    private String alias;
-    private Document avatar;
-    private Set<Person> players;
-    private Set<Game> games;
-    private long baseValuation;
     
-    protected SkatTable() {
-    	super();
-    }
+	@Column(nullable = false, updatable = true)
+	private String alias;
+    
+	@ManyToOne (optional = false)
+	@JoinColumn(name="skatTableReference", nullable = false, updatable = false, insertable = true)
+	private Document avatar;
+    
+	@Min(value = 0)
+	@Max (value = 6)
+	@OneToMany(mappedBy = "PersonTable")
+	private Set<Person> players;
+    
+	@OneToMany(mappedBy = "GameTable")
+	private Set<Game> games;
+    
+	@Column(nullable = false, updatable = true)
+	private long baseValuation;
+	
+    protected SkatTable() {}
 
     public String getAlias(){
         return alias;
