@@ -10,6 +10,10 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
+import javax.persistence.JoinTable;
+import javax.persistence.ElementCollection;
+import javax.persistence.CollectionTable;
+
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
@@ -28,10 +32,16 @@ public class SkatTable extends BaseEntity{
     
 	@Min(value = 0)
 	@Max (value = 6)
-	@OneToMany(mappedBy = "SkatTable")
+	@ElementCollection
+	@CollectionTable
+	@OneToMany(mappedBy = "table")
+	@JoinTable(name = "personId")
 	private Set<Person> players;
-    
-	@OneToMany(mappedBy = "SkatTable")
+
+	@ElementCollection
+	@CollectionTable
+	@OneToMany(mappedBy = "table")
+	@JoinTable(name = "gameId")
 	private Set<Game> games;
     
 	@Column(nullable = false, updatable = true)
