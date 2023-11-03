@@ -14,13 +14,21 @@ import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Embedded;
+import javax.persistence.ManyToOne;
+import javax.persistence.JoinColumn;
+import javax.persistence.ElementCollection;
+import javax.persistence.CollectionTable;
+
 
 @Entity
 @Table(schema = "skat", name = "Person")
 @PrimaryKeyJoinColumn(name = "personId")
 @DiscriminatorValue("Person")
 public class Person extends BaseEntity{
-
+	
 	public enum Group{
 		USER,
 		ADMIN
@@ -28,9 +36,11 @@ public class Person extends BaseEntity{
 	
 	@Embeddable
 	public class Name implements Comparable<BaseEntity>{
-
+		@Column(nullable = true, updatable = true)
 		private String title;
+		@Column(nullable = false, updatable = true)
 		private String family;
+		@Column(nullable = false, updatable = true)
 		private String given;
 		
 		protected Name () {
@@ -72,12 +82,17 @@ public class Person extends BaseEntity{
 	@Embeddable
 	public class Address implements Comparable<BaseEntity>{
 		
+		@Column(nullable = false, updatable = true)
 		private String street;
 		
 		@Pattern(regexp = "^[0-9]{5}(?:-[0-9]{4})?$", message = "Invalid postal code format")
+		@Column(nullable = false, updatable = true)
 		private String postcode;
 		
+		@Column(nullable = false, updatable = true)
 		private String city;
+		
+		@Column(nullable = false, updatable = true)
 		private String country;
 		
 		protected Address () {
@@ -130,41 +145,65 @@ public class Person extends BaseEntity{
 		}
 	}
 	
+	private long personId;
+	
 	@NotNull
 	@Email
-	@Column(nullable = true, updatable = true, insertable = true, length=128)
+	@Column(nullable = false, updatable = true, length=128)
 	private String email;
 	
+	@Column(nullable = false, updatable = false, length=64)
 	private String passwordHash;
 	
 	static private final String DEFAULT_PASSWORD_HASH = HashCodes.sha2HashText(256, "password");
 	
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, updatable = true)
 	private Group group;
+	
+	@Column(nullable = false, updatable = true)
 	private long balance;
+	
+	@Embedded
+	@Column(nullable = false, updatable = false)
 	private Name name;
+	
+	@Embedded
+	@Column(nullable = false, updatable = false)
 	private Address address;
 	
 	@Pattern(regexp = "\\d{3}-\\d{3}-\\d{4}", message = "Invalid phone number format")
-	@Column(name = "phone", nullable = false, updatable = true)
+	@Column(nullable = false, updatable = true)
 	private Set<String> phones;
 	
+	@ManyToOne
+	@JoinColumn(name = "documentId")
+	@Column(updatable = false, insertable = true)
 	private Document avatar;
 	
+	@ManyToOne
+	@JoinColumn(name = "skatTableId")
 	@Column(nullable = true, updatable = true, insertable = true)
 	private SkatTable table;
 	
-	@NotNull 
+	@NotNull
 	@Column(nullable = true, updatable = true, insertable = true)
 	private byte tablePosition;
 	
+	@ManyToOne
+	@JoinColumn(name = "networkNegotiationId")
+	@ElementCollection
+	@CollectionTable
 	@Column(nullable = false, updatable = false, insertable = true)
 	private Set<NetworkNegotiation> negotiations;
 	
 	protected Person() {
-		this.group = Group.USER;
-		this.passwordHash = DEFAULT_PASSWORD_HASH;
-		this.name = new Name();
-		this.address = new Address();
+		//this.group = Group.USER;
+		//this.passwordHash = DEFAULT_PASSWORD_HASH;
+		//this.name = new Name();
+		//this.address = new Address();
+		
+		//this("") Welchen Sinn hat das???????
 		
 	}
 

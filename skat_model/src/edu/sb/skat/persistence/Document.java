@@ -8,6 +8,8 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import org.eclipse.persistence.annotations.CacheIndex;
+
 @Entity
 @Table(schema = "skat", name = "Document")
 @PrimaryKeyJoinColumn(name = "documentId")
@@ -18,11 +20,12 @@ public class Document extends BaseEntity{
 	@Size(max=512)
 	private byte[] content;
 	
-	@NotNull
-	@Column(length=64)
+	@NotNull @Size(min = 64, max = 64)
+	@Column(nullable = false, updatable = false, insertable = true, length = 64, unique = true)
+	@CacheIndex(updateable = false)
 	private String hash;
 	
-	@NotNull
+	@Column(nullable = false, updatable = true)
 	private String type;
 	
 	protected Document() {

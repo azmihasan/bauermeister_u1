@@ -2,9 +2,12 @@ package edu.sb.skat.persistence;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.OneToMany;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 
@@ -18,15 +21,20 @@ public class NetworkNegotiation extends BaseEntity {
 	    WEB_RTC
 	}
 	
+	@OneToMany(mappedBy = "NetworkNegotiation")
     private Person negotiator;
     
+	@NotNull
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, updatable = false)
     private Type type;
     
-    @NotNull
+	@Column(nullable = false, updatable = true)
     private String offer;
     
     @Size(min=0, max=1)
-    private String answer; //0..1 ANNOTATION NEEDED
+    @Column(updatable = true)
+    private String answer;
     
     protected NetworkNegotiation() {
     	super();
