@@ -1,7 +1,10 @@
 package edu.sb.skat.persistence;
 
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
@@ -31,14 +34,16 @@ public class Card extends BaseEntity{
 	}
 	
 	@NotNull
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
 	private Suit suit;
 	
 	@NotNull
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
 	private Rank rank;
 	
-	protected Card() {
-		super();
-	}
+	protected Card() {}
 	
 	public Card(Suit suit, Rank rank) {
 		this.suit = suit;
