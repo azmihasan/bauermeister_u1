@@ -2,38 +2,53 @@ package edu.sb.skat.persistence;
 
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
-import javax.persistence.Embeddable;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
-
 
 @Entity
 @Table(schema = "skat", name = "Hand")
 @PrimaryKeyJoinColumn(name = "handId")
 @DiscriminatorValue("Hand")
 public class Hand extends BaseEntity{
-
+	
+	@ManyToOne (optional = false)
+	@JoinColumn(name="gameReference", nullable = false, updatable = false, insertable = true)
 	private Game game;
 	
+	@ManyToOne (optional = false)
+	@JoinColumn(name="handReference", nullable = false, updatable = false, insertable = true)
 	private Person player;
 	
 	@NotNull
+	@ManyToMany
+	@JoinTable(
+			schema = "skat",
+			name = "Association",
+			joinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "handReference"),
+			inverseJoinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "cardReference"),
+			uniqueConstraints = @UniqueConstraint(columnNames = { "handReference", "cardReference" })
+		)
 	private Set<Card> cards;
 	
+	@Column(nullable = false)
 	private Boolean solo;
 	
-	@NotNull
+	@Column(nullable = true, updatable = true)
 	private short points;
 	
-	@NotNull
+	@Column(nullable = true, updatable = true)
 	private short bid;
 	
-	protected Hand() {
-		super();
-	}
+	protected Hand() {}
 	
 	public Hand(Game game, Person player, Set<Card> cards, Boolean solo, short points, short bid){
 		this.game = game;
@@ -80,7 +95,6 @@ public class Hand extends BaseEntity{
 	public void setBid(short bid) {
 		this.bid = bid;
 	}
-
 }
 
 
