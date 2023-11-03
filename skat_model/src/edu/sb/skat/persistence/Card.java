@@ -11,7 +11,7 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(schema = "skat", name = "Card")
-@PrimaryKeyJoinColumn(name = "cardId")
+@PrimaryKeyJoinColumn(name = "cardIdentity")
 @DiscriminatorValue("Card")
 public class Card extends BaseEntity{
 

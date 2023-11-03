@@ -25,7 +25,7 @@ import javax.persistence.CollectionTable;
 
 @Entity
 @Table(schema = "skat", name = "Person")
-@PrimaryKeyJoinColumn(name = "personId")
+@PrimaryKeyJoinColumn(name = "personIdentity")
 @DiscriminatorValue("Person")
 public class Person extends BaseEntity{
 	
