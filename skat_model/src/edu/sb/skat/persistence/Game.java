@@ -44,7 +44,7 @@ public class Game extends BaseEntity{
     
     @NotNull
     @OneToMany(mappedBy="Game")
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection
     @CollectionTable(name = "game_hands", joinColumns = @JoinColumn(name = "gameId"))
     private Set<Hand> hands;
     
