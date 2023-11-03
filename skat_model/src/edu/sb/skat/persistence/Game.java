@@ -4,11 +4,14 @@ import java.util.Set;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -41,7 +44,8 @@ public class Game extends BaseEntity{
     
     @NotNull
     @OneToMany(mappedBy="Game")
-    @Column(nullable=false, updatable=false, insertable=true)
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "game_hands", joinColumns = @JoinColumn(name = "gameId"))
     private Set<Hand> hands;
     
     @Valid
