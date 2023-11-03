@@ -11,7 +11,6 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -20,7 +19,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(schema = "skat", name = "Game")
-@PrimaryKeyJoinColumn(name = "gameId")
+@PrimaryKeyJoinColumn(name = "gameIdentity")
 @DiscriminatorValue("Game")
 public class Game extends BaseEntity{
     
@@ -38,31 +37,31 @@ public class Game extends BaseEntity{
     
     @NotNull
     @ManyToOne
-    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @JoinColumn(name="gameIdentity", nullable=false, updatable=false)
     @Column(nullable=false, updatable=false, insertable=true)
     private SkatTable table;
     
     @NotNull
     @OneToMany(mappedBy="Game")
     @ElementCollection
-    @CollectionTable(name = "game_hands", joinColumns = @JoinColumn(name = "gameId"))
+    @CollectionTable(name = "game_hands", joinColumns = @JoinColumn(name = "gameIdentity"))
     private Set<Hand> hands;
     
     @Valid
     @ManyToOne
-    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @JoinColumn(name="gameIdentity", nullable=false, updatable=false)
     @Column(nullable=true)
     private Card leftTrickCard;
     
     @Valid
     @ManyToOne
-    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @JoinColumn(name="gameIdentity", nullable=false, updatable=false)
     @Column(nullable=true)
     private Card middleTrickCard;
     
     @Valid
     @ManyToOne
-    @JoinColumn(name="gameId", nullable=false, updatable=false)
+    @JoinColumn(name="gameIdentity", nullable=false, updatable=false)
     @Column(nullable=true)
     private Card rightTrickCard;
 
