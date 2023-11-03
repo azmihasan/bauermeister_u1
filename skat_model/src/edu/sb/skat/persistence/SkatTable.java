@@ -23,21 +23,23 @@ public class SkatTable extends BaseEntity{
 	private String alias;
     
 	@ManyToOne (optional = false)
-	@JoinColumn(name="skatTableReference", nullable = false, updatable = false, insertable = true)
+	@JoinColumn(name="skatTableId", nullable = false, updatable = false, insertable = true)
 	private Document avatar;
     
 	@Min(value = 0)
 	@Max (value = 6)
-	@OneToMany(mappedBy = "PersonTable")
+	@OneToMany(mappedBy = "SkatTable")
 	private Set<Person> players;
     
-	@OneToMany(mappedBy = "GameTable")
+	@OneToMany(mappedBy = "SkatTable")
 	private Set<Game> games;
     
 	@Column(nullable = false, updatable = true)
 	private long baseValuation;
 	
-    protected SkatTable() {}
+    protected SkatTable() {
+    	
+    }
 
     public String getAlias(){
         return alias;
