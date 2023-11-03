@@ -16,16 +16,16 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(schema = "skat", name = "Hand")
-@PrimaryKeyJoinColumn(name = "handId")
+@PrimaryKeyJoinColumn(name = "handIdentity")
 @DiscriminatorValue("Hand")
 public class Hand extends BaseEntity{
 	
 	@ManyToOne (optional = false)
-	@JoinColumn(name="handId", nullable = false, updatable = false, insertable = true)
+	@JoinColumn(name="handIdentity", nullable = false, updatable = false, insertable = true)
 	private Game game;
 	
 	@ManyToOne (optional = false)
-	@JoinColumn(name="handId", nullable = false, updatable = false, insertable = true)
+	@JoinColumn(name="handIdentity", nullable = false, updatable = false, insertable = true)
 	private Person player;
 	
 	@NotNull
@@ -33,9 +33,9 @@ public class Hand extends BaseEntity{
 	@JoinTable(
 			schema = "skat",
 			name = "Hand",
-			joinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "handId"),
-			inverseJoinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "handId"),
-			uniqueConstraints = @UniqueConstraint(columnNames = { "handId", "cardId" })
+			joinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "handIdentity"),
+			inverseJoinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "handIdentity"),
+			uniqueConstraints = @UniqueConstraint(columnNames = { "handIdentity", "cardIdentity" })
 		)
 	private Set<Card> cards;
 	
