@@ -21,7 +21,7 @@ public class NetworkNegotiation extends BaseEntity {
 	    WEB_RTC
 	}
 	
-	@OneToMany(mappedBy = "NetworkNegotiation")
+	@ManyToOne
     private Person negotiator;
     
 	@NotNull

@@ -10,14 +10,18 @@ import javax.validation.constraints.Size;
 
 import org.eclipse.persistence.annotations.CacheIndex;
 
+import edu.sb.skat.util.HashCodes;
+
 @Entity
 @Table(schema = "skat", name = "Document")
 @PrimaryKeyJoinColumn(name = "documentIdentity")
 @DiscriminatorValue("Document")
 public class Document extends BaseEntity{
 	
+	static private final byte[] EMPTY_BYTES = {};
+	
 	@NotNull
-	@Size(max=512)
+	@Column(nullable = false, updatable = false, insertable = true)
 	private byte[] content;
 	
 	@NotNull @Size(min = 64, max = 64)
@@ -25,26 +29,27 @@ public class Document extends BaseEntity{
 	@CacheIndex(updateable = false)
 	private String hash;
 	
+	@NotNull @Size(max = 63)
 	@Column(nullable = false, updatable = true)
 	private String type;
 	
 	protected Document() {
-		super();
+		this(EMPTY_BYTES);
 		
 	}
 
-	public Document(byte[] content, String hash, String type) {
+	public Document(byte[] content) {
 		super();
 		this.content = content;
-		this.hash = hash;
-		this.type = type;
+		this.hash = HashCodes.sha2HashText(256, content);
+		this.type = "application/octet-stream";
 	}
 
 	public byte[] getContent() {
 		return content;
 	}
 
-	public void setContent(byte[] content) {
+	protected void setContent(byte[] content) {
 		this.content = content;
 	}
 
@@ -52,7 +57,7 @@ public class Document extends BaseEntity{
 		return hash;
 	}
 
-	public void setHash(String hash) {
+	protected void setHash(String hash) {
 		this.hash = hash;
 	}
 
@@ -63,7 +68,4 @@ public class Document extends BaseEntity{
 	public void setType(String type) {
 		this.type = type;
 	}
-
-
-
 }

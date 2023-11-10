@@ -1,16 +1,23 @@
 package edu.sb.skat.persistence;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
+import javax.validation.Valid;
 import javax.validation.constraints.Email;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+
+import org.eclipse.persistence.annotations.CacheIndex;
 
 import edu.sb.skat.util.HashCodes;
 
-import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
@@ -18,8 +25,10 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Embedded;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.JoinColumn;
 import javax.persistence.ElementCollection;
+import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 
 
@@ -29,197 +38,69 @@ import javax.persistence.CollectionTable;
 @DiscriminatorValue("Person")
 public class Person extends BaseEntity{
 	
-	public enum Group{
+	static public enum Group{
 		USER,
 		ADMIN
 	}
 	
-	@Embeddable
-	public class Name implements Comparable<BaseEntity>{
-		@Column(nullable = true, updatable = true)
-		private String title;
-		@Column(nullable = false, updatable = true)
-		private String family;
-		@Column(nullable = false, updatable = true)
-		private String given;
-		
-		protected Name () {
-			
-		}
-		
-		public Name(String title, String family, String given) {
-			this.title = title;
-			this.family = family;
-			this.given = given;
-		}
-
-		public String getTitle() {
-			return title;
-		}
-		public void setTitle(String title) {
-			this.title = title;
-		}
-		public String getFamily() {
-			return family;
-		}
-		public void setFamily(String family) {
-			this.family = family;
-		}
-		public String getGiven() {
-			return given;
-		}
-		public void setGiven(String given) {
-			this.given = given;
-		}
-
-		@Override
-		public int compareTo(BaseEntity o) {
-			// TODO Auto-generated method stub
-			return 0;
-		}
-	}
+	static private final String DEFAULT_PASSWORD_HASH = HashCodes.sha2HashText(256, "changeit");
 	
-	@Embeddable
-	public class Address implements Comparable<BaseEntity>{
-		
-		@Column(nullable = false, updatable = true)
-		private String street;
-		
-		@Pattern(regexp = "^[0-9]{5}(?:-[0-9]{4})?$", message = "Invalid postal code format")
-		@Column(nullable = false, updatable = true)
-		private String postcode;
-		
-		@Column(nullable = false, updatable = true)
-		private String city;
-		
-		@Column(nullable = false, updatable = true)
-		private String country;
-		
-		protected Address () {
-			
-		}
-		
-		public Address(String street, String postcode, String city, String country) {
-			this.street = street;
-			this.postcode = postcode;
-			this.city = city;
-			this.country = country;
-		}
-
-		public String getStreet() {
-			return street;
-		}
-
-		public void setStreet(String street) {
-			this.street = street;
-		}
-
-		public String getPostcode() {
-			return postcode;
-		}
-
-		public void setPostcode(String postcode) {
-			this.postcode = postcode;
-		}
-
-		public String getCity() {
-			return city;
-		}
-
-		public void setCity(String city) {
-			this.city = city;
-		}
-
-		public String getCountry() {
-			return country;
-		}
-
-		public void setCountry(String country) {
-			this.country = country;
-		}
-
-		@Override
-		public int compareTo(BaseEntity o) {
-			// TODO Auto-generated method stub
-			return 0;
-		}
-	}
-	
-	private long personId;
-	
-	@NotNull
-	@Email
-	@Column(nullable = false, updatable = true, length=128)
+	@NotNull @Size(max = 128) @Email
+	@Column(nullable = false, updatable = true, length=128, unique = true)
+	@CacheIndex(updateable = true)
 	private String email;
 	
-	@Column(nullable = false, updatable = false, length=64)
+	@NotNull
+	@Column(nullable = false, updatable = true, length=64)
 	private String passwordHash;
 	
-	static private final String DEFAULT_PASSWORD_HASH = HashCodes.sha2HashText(256, "password");
-	
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, updatable = true)
+	@Column(name = "groupAlias", nullable = false, updatable = true)
 	private Group group;
 	
 	@Column(nullable = false, updatable = true)
 	private long balance;
 	
+	@NotNull @Valid
 	@Embedded
-	@Column(nullable = false, updatable = false)
 	private Name name;
 	
+	@NotNull @Valid
 	@Embedded
-	@Column(nullable = false, updatable = false)
 	private Address address;
 	
-	@Pattern(regexp = "\\d{3}-\\d{3}-\\d{4}", message = "Invalid phone number format")
-	@Column(nullable = false, updatable = true)
+	@ElementCollection
+	@CollectionTable(
+			
+	)
+	@Column(name = "phone", nullable = false, updatable = false, insertable = true)
 	private Set<String> phones;
 	
 	@ManyToOne
-	@JoinColumn(name = "documentId")
-	@Column(updatable = false, insertable = true)
+	@JoinColumn(name = "avatarReference", nullable = false, updatable = true)
 	private Document avatar;
 	
 	@ManyToOne
-	@JoinColumn(name = "skatTableId")
-	@Column(nullable = true, updatable = true, insertable = true)
+	@JoinColumn(name = "tableReference", nullable = true, updatable = true)
 	private SkatTable table;
 	
-	@NotNull
-	@Column(nullable = true, updatable = true, insertable = true)
-	private byte tablePosition;
+	@Min(0) @Max(2)
+	@Column(nullable = true, updatable = true)
+	private Byte tablePosition;
 	
-	@ManyToOne
-	@JoinColumn(name = "networkNegotiationId")
-	@ElementCollection
-	@CollectionTable
-	@Column(nullable = false, updatable = false, insertable = true)
+	@NotNull
+	@OneToMany(mappedBy = "negotiator", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.REMOVE})
 	private Set<NetworkNegotiation> negotiations;
 	
-	protected Person() {
-		//this.group = Group.USER;
-		//this.passwordHash = DEFAULT_PASSWORD_HASH;
-		//this.name = new Name();
-		//this.address = new Address();
-		
-		//this("") Welchen Sinn hat das???????
-		
-	}
-
-	public Person(String email, String passwordHash, Group group, long balance, Name name, Address address, Set<String> phones, Document avatar, SkatTable table, byte tablePosition, Set<NetworkNegotiation> negotiations) {
-		
-		this.email = email;
-		this.passwordHash = passwordHash;
-		this.group = group;
-		this.balance = balance;
-		this.name = name;
-		this.address = address;
-		this.phones = phones;
-		this.avatar = avatar;
-		this.table = table;
-		this.tablePosition = tablePosition;
-		this.negotiations = negotiations;
+	public Person() {
+		this.passwordHash = DEFAULT_PASSWORD_HASH;
+		this.group = Group.USER;
+		this.name = new Name();
+		this.address = new Address();
+		this.phones = new HashSet<>();
+		this.table = null;
+		this.tablePosition = null;
+		this.negotiations = Collections.emptySet();
 	}
 
 	public String getEmail() {
