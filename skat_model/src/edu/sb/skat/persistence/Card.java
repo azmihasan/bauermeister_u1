@@ -13,38 +13,30 @@ import javax.validation.constraints.NotNull;
 @Table(schema = "skat", name = "Card")
 @PrimaryKeyJoinColumn(name = "cardIdentity")
 @DiscriminatorValue("Card")
-public class Card extends BaseEntity{
+public class Card extends BaseEntity {
 
-	public enum Suit{
-	    DIAMONDS,
-	    HEARTS,
-	    SPADES,
-	    CLUBS
+	public enum Suit {
+		DIAMONDS, HEARTS, SPADES, CLUBS
 	}
 
-	public enum Rank{
-	    SEVEN,
-	    EIGHT,
-	    NINE,
-	    TEN,
-	    JACK,
-	    QUEEN,
-	    KING,
-	    ACE
+	public enum Rank {
+		SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE
 	}
-	
+
 	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private Suit suit;
-	
+
 	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private Rank rank;
-	
-	protected Card() {}
-	
+
+	protected Card() {
+		this(null, null);
+	}
+
 	public Card(Suit suit, Rank rank) {
 		this.suit = suit;
 		this.rank = rank;
@@ -53,17 +45,16 @@ public class Card extends BaseEntity{
 	public Suit getSuit() {
 		return suit;
 	}
+
 	public void setSuit(Suit suit) {
 		this.suit = suit;
 	}
+
 	public Rank getRank() {
 		return rank;
 	}
+
 	public void setRank(Rank rank) {
 		this.rank = rank;
 	}
-
 }
-
-
-

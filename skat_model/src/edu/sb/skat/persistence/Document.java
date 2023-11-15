@@ -16,26 +16,28 @@ import edu.sb.skat.util.HashCodes;
 @Table(schema = "skat", name = "Document")
 @PrimaryKeyJoinColumn(name = "documentIdentity")
 @DiscriminatorValue("Document")
-public class Document extends BaseEntity{
-	
+public class Document extends BaseEntity {
+
 	static private final byte[] EMPTY_BYTES = {};
-	
+
 	@NotNull
 	@Column(nullable = false, updatable = false, insertable = true)
 	private byte[] content;
-	
-	@NotNull @Size(min = 64, max = 64)
+
+	@NotNull
+	@Size(min = 64, max = 64)
 	@Column(nullable = false, updatable = false, insertable = true, length = 64, unique = true)
 	@CacheIndex(updateable = false)
 	private String hash;
-	
-	@NotNull @Size(max = 63)
+
+	@NotNull
+	@Size(max = 63)
 	@Column(nullable = false, updatable = true)
 	private String type;
-	
+
 	protected Document() {
 		this(EMPTY_BYTES);
-		
+
 	}
 
 	public Document(byte[] content) {

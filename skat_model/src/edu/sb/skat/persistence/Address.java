@@ -8,27 +8,28 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 @Embeddable
-public class Address implements Comparable<Address>{
-	
-	static private final Comparator<Address> COMPARATOR = Comparator
-			.comparing(Address::getCountry)
-			.thenComparing(Address::getCity)
-			.thenComparing(Address::getPostcode)
-			.thenComparing(Address::getStreet);
-	
-	@NotNull @Size(max = 63)
+public class Address implements Comparable<Address> {
+
+	static private final Comparator<Address> COMPARATOR = Comparator.comparing(Address::getCountry)
+			.thenComparing(Address::getCity).thenComparing(Address::getPostcode).thenComparing(Address::getStreet);
+
+	@NotNull
+	@Size(max = 63)
 	@Column(nullable = false, updatable = true)
 	private String street;
-	
-	@NotNull @Size(max = 15)
+
+	@NotNull
+	@Size(max = 15)
 	@Column(nullable = false, updatable = true)
 	private String postcode;
-	
-	@NotNull @Size(max = 63)
+
+	@NotNull
+	@Size(max = 63)
 	@Column(nullable = false, updatable = true)
 	private String city;
-	
-	@NotNull @Size(max = 63)
+
+	@NotNull
+	@Size(max = 63)
 	@Column(nullable = false, updatable = true)
 	private String country;
 

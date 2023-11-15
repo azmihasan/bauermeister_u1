@@ -1,5 +1,6 @@
 package edu.sb.skat.persistence;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Column;
@@ -11,91 +12,92 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(schema = "skat", name = "Hand")
 @PrimaryKeyJoinColumn(name = "handIdentity")
 @DiscriminatorValue("Hand")
-public class Hand extends BaseEntity{
-	
-	@ManyToOne (optional = false)
-	@JoinColumn(name="handIdentity", nullable = false, updatable = false, insertable = true)
+public class Hand extends BaseEntity {
+
+	@ManyToOne
+	@JoinColumn(name = "gameReference", nullable = false, updatable = false, insertable = true)
 	private Game game;
-	
-	@ManyToOne (optional = false)
-	@JoinColumn(name="handIdentity", nullable = false, updatable = false, insertable = true)
+
+	@ManyToOne
+	@JoinColumn(name = "playerReference", nullable = true, updatable = false, insertable = true)
 	private Person player;
-	
-	@NotNull
-	@ManyToMany
-	@JoinTable(
-			schema = "skat",
-			name = "Hand",
-			joinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "handIdentity"),
-			inverseJoinColumns = @JoinColumn(nullable = false, updatable = false, insertable = true, name = "handIdentity"),
-			uniqueConstraints = @UniqueConstraint(columnNames = { "handIdentity", "cardIdentity" })
-		)
-	private Set<Card> cards;
-	
-	@Column(nullable = false)
-	private Boolean solo;
-	
-	@Column(nullable = true, updatable = true)
-	private short points;
-	
+
 	@Column(nullable = true, updatable = true)
 	private short bid;
-	
-	protected Hand() {}
-	
-	public Hand(Game game, Person player, Set<Card> cards, Boolean solo, short points, short bid){
+
+	@Column(nullable = false, updatable = true)
+	private Boolean solo;
+
+	@Column(nullable = false, updatable = true)
+	private short points;
+
+	@NotNull
+	@ManyToMany
+	@JoinTable(schema = "skat", name = "handCard", joinColumns = @JoinColumn(name = "handReference", nullable = false, updatable = false, insertable = true), inverseJoinColumns = @JoinColumn(name = "cardReference", nullable = false, updatable = true))
+	private Set<Card> cards;
+
+	protected Hand() {
+		this(null, null);
+	}
+
+	public Hand(Game game, Person player) {
 		this.game = game;
 		this.player = player;
-		this.cards = cards;
-		this.solo = solo;
-		this.points = points;
-		this.bid = bid;
+		this.cards = new HashSet<>();
+		this.solo = player != null;
 	}
 
 	public Game getGame() {
 		return game;
 	}
+
 	protected void setGame(Game game) {
 		this.game = game;
 	}
+
 	public Person getPlayer() {
 		return player;
 	}
+
 	protected void setPlayer(Person player) {
 		this.player = player;
 	}
+
 	public Set<Card> getCards() {
 		return cards;
 	}
+
 	protected void setCards(Set<Card> cards) {
 		this.cards = cards;
 	}
+
 	public Boolean getSolo() {
 		return solo;
 	}
+
 	public void setSolo(Boolean solo) {
 		this.solo = solo;
 	}
+
 	public short getPoints() {
 		return points;
 	}
+
 	public void setPoints(short points) {
 		this.points = points;
 	}
+
 	public short getBid() {
 		return bid;
 	}
+
 	public void setBid(short bid) {
 		this.bid = bid;
 	}
 }
-
-
-

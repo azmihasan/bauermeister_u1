@@ -11,7 +11,6 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 import org.eclipse.persistence.annotations.CacheIndex;
@@ -31,67 +30,72 @@ import javax.persistence.ElementCollection;
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 
-
 @Entity
 @Table(schema = "skat", name = "Person")
 @PrimaryKeyJoinColumn(name = "personIdentity")
 @DiscriminatorValue("Person")
-public class Person extends BaseEntity{
-	
-	static public enum Group{
-		USER,
-		ADMIN
+public class Person extends BaseEntity {
+
+	static public enum Group {
+		USER, ADMIN
 	}
-	
+
 	static private final String DEFAULT_PASSWORD_HASH = HashCodes.sha2HashText(256, "changeit");
-	
-	@NotNull @Size(max = 128) @Email
-	@Column(nullable = false, updatable = true, length=128, unique = true)
+
+	@NotNull
+	@Size(max = 128)
+	@Email
+	@Column(nullable = false, updatable = true, length = 128, unique = true)
 	@CacheIndex(updateable = true)
 	private String email;
-	
+
 	@NotNull
-	@Column(nullable = false, updatable = true, length=64)
+	@Size(max = 64)
+	@Column(nullable = false, updatable = true, length = 64)
 	private String passwordHash;
-	
+
+	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(name = "groupAlias", nullable = false, updatable = true)
 	private Group group;
-	
+
+	@NotNull
 	@Column(nullable = false, updatable = true)
 	private long balance;
-	
-	@NotNull @Valid
+
+	@NotNull
+	@Valid
 	@Embedded
 	private Name name;
-	
-	@NotNull @Valid
+
+	@NotNull
+	@Valid
 	@Embedded
 	private Address address;
-	
+
 	@ElementCollection
-	@CollectionTable(
-			
-	)
+	@CollectionTable(schema = "skat", name = "personPhoneAssociation", joinColumns = @JoinColumn(name = "personReference", nullable = false, updatable = false, insertable = true))
 	@Column(name = "phone", nullable = false, updatable = false, insertable = true)
 	private Set<String> phones;
-	
+
 	@ManyToOne
 	@JoinColumn(name = "avatarReference", nullable = false, updatable = true)
 	private Document avatar;
-	
+
 	@ManyToOne
 	@JoinColumn(name = "tableReference", nullable = true, updatable = true)
 	private SkatTable table;
-	
-	@Min(0) @Max(2)
+
+	@Min(0)
+	@Max(2)
 	@Column(nullable = true, updatable = true)
 	private Byte tablePosition;
-	
+
 	@NotNull
-	@OneToMany(mappedBy = "negotiator", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.REMOVE})
+	@OneToMany(mappedBy = "negotiator", cascade = { CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH,
+			CascadeType.REMOVE })
 	private Set<NetworkNegotiation> negotiations;
-	
+
 	public Person() {
 		this.passwordHash = DEFAULT_PASSWORD_HASH;
 		this.group = Group.USER;
@@ -190,11 +194,4 @@ public class Person extends BaseEntity{
 	protected void setNegotiations(Set<NetworkNegotiation> negotiations) {
 		this.negotiations = negotiations;
 	}
-
-
-
-
-
-
-
 }
