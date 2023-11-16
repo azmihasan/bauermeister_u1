@@ -7,13 +7,14 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 
 @Entity
 @Table(schema = "skat", name = "NetworkNegotiation")
-@PrimaryKeyJoinColumn(name = "networkNegotiationId")
+@PrimaryKeyJoinColumn(name = "negotiationIdentity")
 @DiscriminatorValue("NetworkNegotiation")
 public class NetworkNegotiation extends BaseEntity {
 
@@ -21,24 +22,30 @@ public class NetworkNegotiation extends BaseEntity {
 		WEB_RTC
 	}
 
+	@NotNull
 	@ManyToOne
+	@JoinColumn(name = "negotiatorReference", nullable = false, updatable = true)
 	private Person negotiator;
 
 	@NotNull
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false, updatable = false)
+	@Column(nullable = false, updatable = false, insertable = true)
 	private Type type;
 
+	@NotNull @Size(max = 2046)
 	@Column(nullable = false, updatable = true)
 	private String offer;
 
-	@Size(min = 0, max = 1)
-	@Column(updatable = true)
+	@Size(max = 2046)
+	@Column(nullable = true, updatable = true)
 	private String answer;
-
+	
 	protected NetworkNegotiation() {
-		super();
-		this.negotiator = new Person();
+		this(new Person());
+	}
+	
+	public NetworkNegotiation(Person negotiator) {
+		this.negotiator = negotiator;
 		this.type = Type.WEB_RTC;
 	}
 

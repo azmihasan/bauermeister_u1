@@ -41,7 +41,6 @@ public class Document extends BaseEntity {
 	}
 
 	public Document(byte[] content) {
-		super();
 		this.content = content;
 		this.hash = HashCodes.sha2HashText(256, content);
 		this.type = "application/octet-stream";

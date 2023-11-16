@@ -17,7 +17,7 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(schema = "skat", name = "SkatTable")
-@PrimaryKeyJoinColumn(name = "skatTableId")
+@PrimaryKeyJoinColumn(name = "tableIdentity")
 @DiscriminatorValue("SkatTable")
 public class SkatTable extends BaseEntity {
 
@@ -25,8 +25,9 @@ public class SkatTable extends BaseEntity {
 	@Column(nullable = false, updatable = true)
 	private String alias;
 
+	@NotNull
 	@ManyToOne
-	@JoinColumn(name = "avatarReference", nullable = false, updatable = false)
+	@JoinColumn(name = "avatarReference", nullable = false, updatable = true)
 	private Document avatar;
 
 	@OneToMany(mappedBy = "table", cascade = { CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH })
@@ -41,8 +42,15 @@ public class SkatTable extends BaseEntity {
 	private long baseValuation;
 
 	protected SkatTable() {
+		this(new Document());
+	}
+	
+	public SkatTable(Document avatar) {
+		this.alias = "";
+		this.avatar = avatar;
 		this.games = Collections.emptySet();
 		this.players = Collections.emptySet();
+		this.baseValuation = 0;
 	}
 
 	public String getAlias() {

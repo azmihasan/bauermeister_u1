@@ -42,20 +42,16 @@ public class Person extends BaseEntity {
 
 	static private final String DEFAULT_PASSWORD_HASH = HashCodes.sha2HashText(256, "changeit");
 
-	@NotNull
-	@Size(max = 128)
-	@Email
+	@NotNull @Email @Size(max = 128)
 	@Column(nullable = false, updatable = true, length = 128, unique = true)
 	@CacheIndex(updateable = true)
 	private String email;
 
-	@NotNull
-	@Size(max = 64)
+	@NotNull @Size(max = 64)
 	@Column(nullable = false, updatable = true, length = 64)
 	private String passwordHash;
 
-	@NotNull
-	@Enumerated(EnumType.STRING)
+	@NotNull @Enumerated(EnumType.STRING)
 	@Column(name = "groupAlias", nullable = false, updatable = true)
 	private Group group;
 
@@ -63,18 +59,14 @@ public class Person extends BaseEntity {
 	@Column(nullable = false, updatable = true)
 	private long balance;
 
-	@NotNull
-	@Valid
-	@Embedded
+	@NotNull @Valid @Embedded
 	private Name name;
 
-	@NotNull
-	@Valid
-	@Embedded
+	@NotNull @Valid @Embedded
 	private Address address;
 
 	@ElementCollection
-	@CollectionTable(schema = "skat", name = "personPhoneAssociation", joinColumns = @JoinColumn(name = "personReference", nullable = false, updatable = false, insertable = true))
+	@CollectionTable(schema = "skat", name = "PersonPhoneAssociation", joinColumns = @JoinColumn(name = "personReference", nullable = false, updatable = false, insertable = true))
 	@Column(name = "phone", nullable = false, updatable = false, insertable = true)
 	private Set<String> phones;
 
@@ -101,7 +93,7 @@ public class Person extends BaseEntity {
 		this.group = Group.USER;
 		this.name = new Name();
 		this.address = new Address();
-		this.phones = new HashSet<>();
+		this.phones = new HashSet<String>();
 		this.table = null;
 		this.tablePosition = null;
 		this.negotiations = Collections.emptySet();
