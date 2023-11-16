@@ -37,7 +37,7 @@ public class Game extends BaseEntity {
 	private SkatTable table;
 
 	@NotNull
-	@OneToMany(mappedBy = "Game", cascade = { CascadeType.REMOVE, CascadeType.REFRESH, CascadeType.MERGE,
+	@OneToMany(mappedBy = "game", cascade = { CascadeType.REMOVE, CascadeType.REFRESH, CascadeType.MERGE,
 			CascadeType.DETACH })
 	private Set<Hand> hands;
 
