@@ -29,17 +29,22 @@ public class Hand extends BaseEntity {
 	private Person player;
 
 	@Column(nullable = true, updatable = true)
-	private short bid;
-
+	private Short bid;
+	
 	@Column(nullable = false, updatable = true)
-	private Boolean solo;
+	private boolean solo;
 
 	@Column(nullable = false, updatable = true)
 	private short points;
 
 	@NotNull
 	@ManyToMany
-	@JoinTable(schema = "skat", name = "handCard", joinColumns = @JoinColumn(name = "handReference", nullable = false, updatable = false, insertable = true), inverseJoinColumns = @JoinColumn(name = "cardReference", nullable = false, updatable = true))
+	@JoinTable(
+		schema = "skat",
+		name = "handCard",
+		joinColumns = @JoinColumn(name = "handReference", nullable = false, updatable = false, insertable = true),
+		inverseJoinColumns = @JoinColumn(name = "cardReference", nullable = false, updatable = false, insertable = true)
+	)
 	private Set<Card> cards;
 
 	protected Hand() {
@@ -50,7 +55,6 @@ public class Hand extends BaseEntity {
 		this.game = game;
 		this.player = player;
 		this.cards = new HashSet<>();
-		this.solo = player != null;
 	}
 
 	public Game getGame() {
@@ -77,11 +81,11 @@ public class Hand extends BaseEntity {
 		this.cards = cards;
 	}
 
-	public Boolean getSolo() {
+	public boolean getSolo() {
 		return solo;
 	}
 
-	public void setSolo(Boolean solo) {
+	public void setSolo(boolean solo) {
 		this.solo = solo;
 	}
 
@@ -93,11 +97,11 @@ public class Hand extends BaseEntity {
 		this.points = points;
 	}
 
-	public short getBid() {
+	public Short getBid() {
 		return bid;
 	}
 
-	public void setBid(short bid) {
+	public void setBid(Short bid) {
 		this.bid = bid;
 	}
 }

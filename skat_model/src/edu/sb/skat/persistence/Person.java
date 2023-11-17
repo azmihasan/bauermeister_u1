@@ -66,7 +66,11 @@ public class Person extends BaseEntity {
 	private Address address;
 
 	@ElementCollection
-	@CollectionTable(schema = "skat", name = "PersonPhoneAssociation", joinColumns = @JoinColumn(name = "personReference", nullable = false, updatable = false, insertable = true))
+	@CollectionTable(
+		schema = "skat",
+		name = "PersonPhoneAssociation",
+		joinColumns = @JoinColumn(name = "personReference", nullable = false, updatable = false, insertable = true)
+	)
 	@Column(name = "phone", nullable = false, updatable = false, insertable = true)
 	private Set<String> phones;
 
@@ -84,8 +88,7 @@ public class Person extends BaseEntity {
 	private Byte tablePosition;
 
 	@NotNull
-	@OneToMany(mappedBy = "negotiator", cascade = { CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH,
-			CascadeType.REMOVE })
+	@OneToMany(mappedBy = "negotiator", cascade = { CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.REMOVE })
 	private Set<NetworkNegotiation> negotiations;
 
 	public Person() {

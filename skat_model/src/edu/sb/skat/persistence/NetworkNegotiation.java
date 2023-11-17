@@ -18,13 +18,12 @@ import javax.persistence.Table;
 @DiscriminatorValue("NetworkNegotiation")
 public class NetworkNegotiation extends BaseEntity {
 
-	public enum Type {
+	static public enum Type {
 		WEB_RTC
 	}
 
-	@NotNull
-	@ManyToOne
-	@JoinColumn(name = "negotiatorReference", nullable = false, updatable = true)
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "negotiatorReference", nullable = false, updatable = false, insertable = true)
 	private Person negotiator;
 
 	@NotNull
@@ -41,12 +40,12 @@ public class NetworkNegotiation extends BaseEntity {
 	private String answer;
 	
 	protected NetworkNegotiation() {
-		this(new Person());
+		this(null, Type.WEB_RTC);
 	}
 	
-	public NetworkNegotiation(Person negotiator) {
+	public NetworkNegotiation(Person negotiator, Type type) {
 		this.negotiator = negotiator;
-		this.type = Type.WEB_RTC;
+		this.type = type;
 	}
 
 	public Person getNegotiator() {

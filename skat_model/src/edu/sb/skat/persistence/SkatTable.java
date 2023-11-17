@@ -22,32 +22,26 @@ import javax.validation.constraints.NotNull;
 public class SkatTable extends BaseEntity {
 
 	@NotNull
-	@Column(nullable = false, updatable = true)
+	@Column(nullable = false, updatable = true, unique = true)
 	private String alias;
 
-	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "avatarReference", nullable = false, updatable = true)
 	private Document avatar;
 
+	@NotNull
 	@OneToMany(mappedBy = "table", cascade = { CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH })
 	private Set<Person> players;
-
-	@OneToMany(mappedBy = "table", cascade = { CascadeType.REMOVE, CascadeType.REFRESH, CascadeType.MERGE,
-			CascadeType.DETACH })
+	
+	@NotNull
+	@OneToMany(mappedBy = "table", cascade = { CascadeType.REMOVE, CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH })
 	private Set<Game> games;
 
 	@NotNull
 	@Column(nullable = false, updatable = true)
 	private long baseValuation;
-
-	protected SkatTable() {
-		this(new Document());
-	}
 	
-	public SkatTable(Document avatar) {
-		this.alias = "";
-		this.avatar = avatar;
+	public SkatTable() {
 		this.games = Collections.emptySet();
 		this.players = Collections.emptySet();
 		this.baseValuation = 0;

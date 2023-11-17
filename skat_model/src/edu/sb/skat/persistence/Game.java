@@ -22,7 +22,7 @@ import javax.persistence.Table;
 @DiscriminatorValue("Game")
 public class Game extends BaseEntity {
 
-	public enum State {
+	static public enum State {
 		DEAL, NEGOTIATE, ACTIVE, DONE
 	}
 
@@ -31,14 +31,12 @@ public class Game extends BaseEntity {
 	@Column(nullable = false, updatable = true)
 	private State state;
 
-	@NotNull
-	@ManyToOne
+	@ManyToOne(optional = false)
 	@JoinColumn(name = "tableReference", nullable = false, updatable = false, insertable = true)
 	private SkatTable table;
 
 	@NotNull
-	@OneToMany(mappedBy = "game", cascade = { CascadeType.REMOVE, CascadeType.REFRESH, CascadeType.MERGE,
-			CascadeType.DETACH })
+	@OneToMany(mappedBy = "game", cascade = { CascadeType.REMOVE, CascadeType.REFRESH, CascadeType.MERGE, CascadeType.DETACH })
 	private Set<Hand> hands;
 
 	@ManyToOne

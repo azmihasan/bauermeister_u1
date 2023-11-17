@@ -10,8 +10,10 @@ import javax.validation.constraints.Size;
 @Embeddable
 public class Name implements Comparable<Name> {
 
-	static private final Comparator<Name> COMPARATOR = Comparator.comparing(Name::getFamily)
-			.thenComparing(Name::getTitle).thenComparing(Name::getGiven);
+	static private final Comparator<Name> COMPARATOR = Comparator
+			.comparing(Name::getFamily, Comparator.nullsLast(Comparator.naturalOrder()))
+			.thenComparing(Name::getTitle)
+			.thenComparing(Name::getGiven);
 
 	@Size(max = 15)
 	@Column(nullable = true, updatable = true)

@@ -15,22 +15,22 @@ import javax.validation.constraints.NotNull;
 @DiscriminatorValue("Card")
 public class Card extends BaseEntity {
 
-	public enum Suit {
+	static public enum Suit {
 		DIAMONDS, HEARTS, SPADES, CLUBS
 	}
 
-	public enum Rank {
+	static public enum Rank {
 		SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE
 	}
 
 	@NotNull
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
+	@Column(nullable = false, updatable = false, insertable = true)
 	private Suit suit;
 
 	@NotNull
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
+	@Column(nullable = false, updatable = false, insertable = true)
 	private Rank rank;
 
 	protected Card() {
@@ -46,7 +46,7 @@ public class Card extends BaseEntity {
 		return suit;
 	}
 
-	public void setSuit(Suit suit) {
+	protected void setSuit(Suit suit) {
 		this.suit = suit;
 	}
 
@@ -54,7 +54,7 @@ public class Card extends BaseEntity {
 		return rank;
 	}
 
-	public void setRank(Rank rank) {
+	protected void setRank(Rank rank) {
 		this.rank = rank;
 	}
 }
