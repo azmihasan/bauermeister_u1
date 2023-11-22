@@ -104,4 +104,12 @@ public class Hand extends BaseEntity {
 	public void setBid(Short bid) {
 		this.bid = bid;
 	}
+	
+	protected Long getGameReference() {
+		return this.game == null ? 0 : this.game.getIdentity(); 
+	}
+	
+	protected Long getPlayerReference() {
+		return this.player == null ? 0 : this.player.getIdentity(); 
+	}
 }

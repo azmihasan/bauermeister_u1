@@ -189,4 +189,8 @@ public class Person extends BaseEntity {
 	protected void setNegotiations(Set<NetworkNegotiation> negotiations) {
 		this.negotiations = negotiations;
 	}
+	
+	protected Long getTableReference() {
+		return this.table == null ? null : this.table.getIdentity();
+	}
 }

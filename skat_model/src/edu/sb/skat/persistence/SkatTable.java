@@ -86,4 +86,12 @@ public class SkatTable extends BaseEntity {
 	public void setBaseValuation(long value) {
 		baseValuation = value;
 	}
+	
+	protected long[] getplayerReferences() {
+		return this.players.stream().mapToLong(BaseEntity::getIdentity).sorted().toArray();
+	}
+	
+	protected long[] getGameReferences() {
+		return this.games.stream().mapToLong(BaseEntity::getIdentity).sorted().toArray();
+	}
 }

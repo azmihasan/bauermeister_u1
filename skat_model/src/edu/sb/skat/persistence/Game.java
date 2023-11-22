@@ -109,4 +109,14 @@ public class Game extends BaseEntity {
 		this.rightTrickCard = rightTrickCard;
 	}
 
+	public Long getTableReferences() {
+		return this.table == null ? null : this.table.getIdentity();
+	}
+	
+	// protected Long Game#getGameTypeReference()
+	// wir haben kein GameType Class.
+	
+	public long[] getHandeReferences() {
+		return this.hands.stream().mapToLong(BaseEntity::getIdentity).sorted().toArray();
+	}
 }
