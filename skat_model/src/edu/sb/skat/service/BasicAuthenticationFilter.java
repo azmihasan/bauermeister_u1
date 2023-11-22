@@ -1,16 +1,28 @@
 package edu.sb.skat.service;
 
+import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static javax.ws.rs.core.HttpHeaders.WWW_AUTHENTICATE;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.UNAUTHORIZED;
-// import java.util.Base64;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Base64;
 import javax.annotation.Priority;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
+
+import edu.sb.skat.persistence.Person;
 import edu.sb.skat.util.Copyright;
+import edu.sb.skat.util.HashCodes;
+import edu.sb.skat.util.RestJpaLifecycleProvider;
 
 
 /**
@@ -20,8 +32,9 @@ import edu.sb.skat.util.Copyright;
 @Provider
 @Priority(Priorities.AUTHENTICATION)
 @Copyright(year = 2017, holders = "Sascha Baumeister")
-public class BasicAuthenticationReceiverFilterSkeleton implements ContainerRequestFilter {
-
+public class BasicAuthenticationFilter implements ContainerRequestFilter {
+	static private final String QUERY_PERSON = "select p from Person as p where p.email = :email";
+	
 	/**
 	 * HTTP request header for the authenticated requester's identity.
 	 */
@@ -39,17 +52,16 @@ public class BasicAuthenticationReceiverFilterSkeleton implements ContainerReque
 	 *         "Requester-Identity" header
 	 */
 	public void filter (final ContainerRequestContext requestContext) throws NullPointerException, ClientErrorException {
-		// TODO:
 		// - Throw a ClientErrorException(Status.BAD_REQUEST) if the given context's headers map already contains a
 		//   "Requester-Identity" key, in order to prevent spoofing attacks.
 		// - Remove the "Authorization" header from said map and store the first of it's values in a variable
 		//   "textCredentials", or null if the header value is either null or empty.
 		// - if the "textCredentials" variable is not null, parse it programmatically using Base64.getDecoder().decode(),
 		//   use the resulting byte array to create a new String instance, and store the resulting <email>:<password>
-		//   combination in variable "credentials". 
+		//   combination in variable "credentials".
 		// - Perform the PQL-Query "select p from Person as p where p.email = :email"), using the credentials email
 		//   address part. Note that this query will go to the second level cache before hitting the database if the
-		//   Person#email field is annotated using @CacheIndex(updateable = true)! 
+		//   Person#email field is annotated using @CacheIndex(updateable = true)!
 		// - if the resulting people list contains exactly one element, calculate the hex-string representation
 		//   (i.e. 2 digits per byte) of the SHA2-256 hash code of the credential's password part using
 		//   HashCodes.sha2HashText(256, text).
@@ -60,6 +72,42 @@ public class BasicAuthenticationReceiverFilterSkeleton implements ContainerReque
 		//   to provide HTTP Basic credentials (i.e. status code 401, and "WWW-Authenticate" header value "Basic").
 		//   Note that the alternative of throwing NotAuthorizedException("Basic") comes with the disadvantage that
 		//   failed authentication attempts clutter the server log with stack traces.
+		
+		if (requestContext.getHeaders().containsKey(REQUESTER_IDENTITY)) throw new ClientErrorException(BAD_REQUEST);
+		
+		final List<String> header = requestContext.getHeaders().remove(AUTHORIZATION);
+		final String textCredentials = header == null || header.isEmpty() ? null : header.get(0);
+		
+		if (textCredentials != null) {
+			byte[] decode = Base64.getDecoder().decode(textCredentials);
+			String credentials = new String(decode);
+			
+			String[] credentialsPair = credentials.split(":"); 
+			String email = credentialsPair[0];
+			String password = credentialsPair[1];
+			
+			//final EntityManagerFactory emf = Persistence.createEntityManagerFactory("skat");
+			//final EntityManager em = emf.createEntityManager();
+			final EntityManager em = RestJpaLifecycleProvider.entityManager("skat");
+			final Person requester = em
+				.createQuery(QUERY_PERSON, Person.class)
+				.setParameter("email", email)
+				.getResultList()
+				.stream()
+				.findFirst()
+				.orElse(null);
+			
+			if (requester != null) {
+				String rightPasswordHash = requester.getPasswordHash();
+				String leftPasswordHash = HashCodes.sha2HashText(256, password);
+				
+				if (Objects.equals(rightPasswordHash, leftPasswordHash)) {
+					requestContext.getHeaders().putSingle(REQUESTER_IDENTITY, Long.toString(requester.getIdentity()));
+					return;
+				}
+			}
+		}
+		
 		requestContext.abortWith(Response.status(UNAUTHORIZED).header(WWW_AUTHENTICATE, "Basic").build());
 	}
 }
