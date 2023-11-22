@@ -1,5 +1,8 @@
 package edu.sb.skat.persistence;
 
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbTransient;
+import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -11,11 +14,13 @@ import javax.validation.constraints.Size;
 import org.eclipse.persistence.annotations.CacheIndex;
 
 import edu.sb.skat.util.HashCodes;
+import edu.sb.skat.util.JsonProtectedPropertyStrategy;
 
 @Entity
 @Table(schema = "skat", name = "Document")
 @PrimaryKeyJoinColumn(name = "documentIdentity")
 @DiscriminatorValue("Document")
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class Document extends BaseEntity {
 
 	static private final byte[] EMPTY_BYTES = {};
@@ -46,6 +51,7 @@ public class Document extends BaseEntity {
 		this.type = "application/octet-stream";
 	}
 
+	@JsonbTransient
 	public byte[] getContent() {
 		return content;
 	}
@@ -54,6 +60,7 @@ public class Document extends BaseEntity {
 		this.content = content;
 	}
 
+	@JsonbProperty
 	public String getHash() {
 		return hash;
 	}
@@ -62,6 +69,7 @@ public class Document extends BaseEntity {
 		this.hash = hash;
 	}
 
+	@JsonbProperty
 	public String getType() {
 		return type;
 	}

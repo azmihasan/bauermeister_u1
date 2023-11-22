@@ -2,12 +2,17 @@ package edu.sb.skat.persistence;
 
 import java.util.Comparator;
 
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import edu.sb.skat.util.JsonProtectedPropertyStrategy;
+
 @Embeddable
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class Name implements Comparable<Name> {
 
 	static private final Comparator<Name> COMPARATOR = Comparator
@@ -29,6 +34,7 @@ public class Name implements Comparable<Name> {
 	@Column(name = "forename", nullable = false, updatable = true)
 	private String given;
 
+	@JsonbProperty
 	public String getTitle() {
 		return title;
 	}
@@ -37,6 +43,7 @@ public class Name implements Comparable<Name> {
 		this.title = title;
 	}
 
+	@JsonbProperty
 	public String getFamily() {
 		return family;
 	}
@@ -45,6 +52,7 @@ public class Name implements Comparable<Name> {
 		this.family = family;
 	}
 
+	@JsonbProperty
 	public String getGiven() {
 		return given;
 	}

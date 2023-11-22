@@ -4,6 +4,12 @@ import java.util.Collections;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
+
+import edu.sb.skat.util.JsonProtectedPropertyStrategy;
+
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbTransient;
+import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -20,6 +26,7 @@ import javax.persistence.Table;
 @Table(schema = "skat", name = "Game")
 @PrimaryKeyJoinColumn(name = "gameIdentity")
 @DiscriminatorValue("Game")
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class Game extends BaseEntity {
 
 	static public enum State {
@@ -61,6 +68,7 @@ public class Game extends BaseEntity {
 		this.hands = Collections.emptySet();
 	}
 
+	@JsonbProperty
 	public State getState() {
 		return state;
 	}
@@ -69,6 +77,12 @@ public class Game extends BaseEntity {
 		this.state = state;
 	}
 
+	@JsonbProperty
+	public Long getTableReferences() {
+		return this.table == null ? null : this.table.getIdentity();
+	}
+	
+	@JsonbTransient
 	public SkatTable getTable() {
 		return table;
 	}
@@ -77,6 +91,12 @@ public class Game extends BaseEntity {
 		this.table = table;
 	}
 
+	@JsonbProperty
+	public long[] getHandeReferences() {
+		return this.hands.stream().mapToLong(BaseEntity::getIdentity).sorted().toArray();
+	}
+	
+	@JsonbTransient
 	public Set<Hand> getHands() {
 		return hands;
 	}
@@ -85,6 +105,7 @@ public class Game extends BaseEntity {
 		this.hands = hands;
 	}
 
+	@JsonbProperty
 	public Card getLeftTrickCard() {
 		return leftTrickCard;
 	}
@@ -93,6 +114,7 @@ public class Game extends BaseEntity {
 		this.leftTrickCard = leftTrickCard;
 	}
 
+	@JsonbProperty
 	public Card getMiddleTrickCard() {
 		return middleTrickCard;
 	}
@@ -101,6 +123,7 @@ public class Game extends BaseEntity {
 		this.middleTrickCard = middleTrickCard;
 	}
 
+	@JsonbProperty
 	public Card getRightTrickCard() {
 		return rightTrickCard;
 	}
@@ -108,15 +131,13 @@ public class Game extends BaseEntity {
 	public void setRightTrickCard(Card rightTrickCard) {
 		this.rightTrickCard = rightTrickCard;
 	}
-
-	public Long getTableReferences() {
-		return this.table == null ? null : this.table.getIdentity();
-	}
 	
-	// protected Long Game#getGameTypeReference()
-	// wir haben kein GameType Class.
 	
-	public long[] getHandeReferences() {
-		return this.hands.stream().mapToLong(BaseEntity::getIdentity).sorted().toArray();
-	}
+	// GameType ist in unserem Projekt nicht definiert.
+	/*
+	@JsonbProperty
+	protected Long getGameTypeReference() {
+    	return this.gameType == null ? null : this.gameType.getIdentity();
+    }
+    */
 }

@@ -11,14 +11,20 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbTransient;
+import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.CascadeType;
 
 import javax.validation.constraints.NotNull;
+
+import edu.sb.skat.util.JsonProtectedPropertyStrategy;
 
 @Entity
 @Table(schema = "skat", name = "SkatTable")
 @PrimaryKeyJoinColumn(name = "tableIdentity")
 @DiscriminatorValue("SkatTable")
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class SkatTable extends BaseEntity {
 
 	@NotNull
@@ -47,6 +53,7 @@ public class SkatTable extends BaseEntity {
 		this.baseValuation = 0;
 	}
 
+	@JsonbProperty
 	public String getAlias() {
 		return alias;
 	}
@@ -55,6 +62,7 @@ public class SkatTable extends BaseEntity {
 		alias = value;
 	}
 
+	@JsonbProperty
 	public Document getAvatar() {
 		return avatar;
 	}
@@ -62,7 +70,13 @@ public class SkatTable extends BaseEntity {
 	public void setAvatar(Document value) {
 		avatar = value;
 	}
+	
+	@JsonbProperty
+	protected long[] getplayerReferences() {
+		return this.players.stream().mapToLong(BaseEntity::getIdentity).sorted().toArray();
+	}
 
+	@JsonbTransient
 	public Set<Person> getPlayers() {
 		return players;
 	}
@@ -71,6 +85,12 @@ public class SkatTable extends BaseEntity {
 		players = value;
 	}
 
+	@JsonbProperty
+	protected long[] getGameReferences() {
+		return this.games.stream().mapToLong(BaseEntity::getIdentity).sorted().toArray();
+	}
+	
+	@JsonbTransient
 	public Set<Game> getGames() {
 		return games;
 	}
@@ -79,19 +99,12 @@ public class SkatTable extends BaseEntity {
 		games = value;
 	}
 
+	@JsonbProperty
 	public long getBaseValuation() {
 		return baseValuation;
 	}
 
 	public void setBaseValuation(long value) {
 		baseValuation = value;
-	}
-	
-	protected long[] getplayerReferences() {
-		return this.players.stream().mapToLong(BaseEntity::getIdentity).sorted().toArray();
-	}
-	
-	protected long[] getGameReferences() {
-		return this.games.stream().mapToLong(BaseEntity::getIdentity).sorted().toArray();
 	}
 }

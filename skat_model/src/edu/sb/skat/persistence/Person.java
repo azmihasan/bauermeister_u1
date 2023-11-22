@@ -16,6 +16,7 @@ import javax.validation.constraints.Size;
 import org.eclipse.persistence.annotations.CacheIndex;
 
 import edu.sb.skat.util.HashCodes;
+import edu.sb.skat.util.JsonProtectedPropertyStrategy;
 
 import javax.persistence.Entity;
 import javax.persistence.PrimaryKeyJoinColumn;
@@ -27,6 +28,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.JoinColumn;
 import javax.persistence.ElementCollection;
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbTransient;
+import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 
@@ -34,6 +38,7 @@ import javax.persistence.CollectionTable;
 @Table(schema = "skat", name = "Person")
 @PrimaryKeyJoinColumn(name = "personIdentity")
 @DiscriminatorValue("Person")
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class Person extends BaseEntity {
 
 	static public enum Group {
@@ -102,6 +107,7 @@ public class Person extends BaseEntity {
 		this.negotiations = Collections.emptySet();
 	}
 
+	@JsonbProperty
 	public String getEmail() {
 		return email;
 	}
@@ -110,6 +116,7 @@ public class Person extends BaseEntity {
 		this.email = email;
 	}
 
+	@JsonbProperty
 	public String getPasswordHash() {
 		return passwordHash;
 	}
@@ -118,6 +125,7 @@ public class Person extends BaseEntity {
 		this.passwordHash = passwordHash;
 	}
 
+	@JsonbProperty
 	public Group getGroup() {
 		return group;
 	}
@@ -126,6 +134,7 @@ public class Person extends BaseEntity {
 		this.group = group;
 	}
 
+	@JsonbProperty
 	public long getBalance() {
 		return balance;
 	}
@@ -134,6 +143,7 @@ public class Person extends BaseEntity {
 		this.balance = balance;
 	}
 
+	@JsonbProperty
 	public Name getName() {
 		return name;
 	}
@@ -142,6 +152,7 @@ public class Person extends BaseEntity {
 		this.name = name;
 	}
 
+	@JsonbProperty
 	public Address getAddress() {
 		return address;
 	}
@@ -150,6 +161,7 @@ public class Person extends BaseEntity {
 		this.address = address;
 	}
 
+	@JsonbProperty
 	public Set<String> getPhones() {
 		return phones;
 	}
@@ -158,6 +170,7 @@ public class Person extends BaseEntity {
 		this.phones = phones;
 	}
 
+	@JsonbProperty
 	public Document getAvatar() {
 		return avatar;
 	}
@@ -166,6 +179,12 @@ public class Person extends BaseEntity {
 		this.avatar = avatar;
 	}
 
+	@JsonbProperty
+	protected Long getTableReference() {
+		return this.table == null ? null : this.table.getIdentity();
+	}
+	
+	@JsonbTransient
 	public SkatTable getTable() {
 		return table;
 	}
@@ -174,6 +193,7 @@ public class Person extends BaseEntity {
 		this.table = table;
 	}
 
+	@JsonbProperty
 	public byte getTablePosition() {
 		return tablePosition;
 	}
@@ -182,15 +202,12 @@ public class Person extends BaseEntity {
 		this.tablePosition = tablePosition;
 	}
 
+	@JsonbTransient
 	public Set<NetworkNegotiation> getNegotiations() {
 		return negotiations;
 	}
 
 	protected void setNegotiations(Set<NetworkNegotiation> negotiations) {
 		this.negotiations = negotiations;
-	}
-	
-	protected Long getTableReference() {
-		return this.table == null ? null : this.table.getIdentity();
 	}
 }

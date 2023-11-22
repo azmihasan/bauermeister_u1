@@ -2,6 +2,11 @@ package edu.sb.skat.persistence;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+
+import edu.sb.skat.util.JsonProtectedPropertyStrategy;
+
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -16,6 +21,7 @@ import javax.persistence.Table;
 @Table(schema = "skat", name = "NetworkNegotiation")
 @PrimaryKeyJoinColumn(name = "negotiationIdentity")
 @DiscriminatorValue("NetworkNegotiation")
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class NetworkNegotiation extends BaseEntity {
 
 	static public enum Type {
@@ -48,6 +54,7 @@ public class NetworkNegotiation extends BaseEntity {
 		this.type = type;
 	}
 
+	@JsonbProperty
 	public Person getNegotiator() {
 		return negotiator;
 	}
@@ -56,6 +63,7 @@ public class NetworkNegotiation extends BaseEntity {
 		negotiator = value;
 	}
 
+	@JsonbProperty
 	public Type getType() {
 		return type;
 	}
@@ -64,6 +72,7 @@ public class NetworkNegotiation extends BaseEntity {
 		type = value;
 	}
 
+	@JsonbProperty
 	public String getOffer() {
 		return offer;
 	}
@@ -72,6 +81,7 @@ public class NetworkNegotiation extends BaseEntity {
 		offer = value;
 	}
 
+	@JsonbProperty
 	public String getAnswer() {
 		return answer;
 	}

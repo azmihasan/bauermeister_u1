@@ -3,6 +3,9 @@ package edu.sb.skat.persistence;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbTransient;
+import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -14,10 +17,13 @@ import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
+import edu.sb.skat.util.JsonProtectedPropertyStrategy;
+
 @Entity
 @Table(schema = "skat", name = "Hand")
 @PrimaryKeyJoinColumn(name = "handIdentity")
 @DiscriminatorValue("Hand")
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class Hand extends BaseEntity {
 
 	@ManyToOne
@@ -57,6 +63,12 @@ public class Hand extends BaseEntity {
 		this.cards = new HashSet<>();
 	}
 
+	@JsonbProperty
+	protected Long getGameReference() {
+		return this.game == null ? 0 : this.game.getIdentity(); 
+	}
+	
+	@JsonbTransient
 	public Game getGame() {
 		return game;
 	}
@@ -65,6 +77,12 @@ public class Hand extends BaseEntity {
 		this.game = game;
 	}
 
+	@JsonbProperty
+	protected Long getPlayerReference() {
+		return this.player == null ? 0 : this.player.getIdentity(); 
+	}
+	
+	@JsonbTransient
 	public Person getPlayer() {
 		return player;
 	}
@@ -73,6 +91,7 @@ public class Hand extends BaseEntity {
 		this.player = player;
 	}
 
+	@JsonbProperty
 	public Set<Card> getCards() {
 		return cards;
 	}
@@ -81,6 +100,7 @@ public class Hand extends BaseEntity {
 		this.cards = cards;
 	}
 
+	@JsonbProperty
 	public boolean getSolo() {
 		return solo;
 	}
@@ -89,6 +109,7 @@ public class Hand extends BaseEntity {
 		this.solo = solo;
 	}
 
+	@JsonbProperty
 	public short getPoints() {
 		return points;
 	}
@@ -97,19 +118,12 @@ public class Hand extends BaseEntity {
 		this.points = points;
 	}
 
+	@JsonbProperty
 	public Short getBid() {
 		return bid;
 	}
 
 	public void setBid(Short bid) {
 		this.bid = bid;
-	}
-	
-	protected Long getGameReference() {
-		return this.game == null ? 0 : this.game.getIdentity(); 
-	}
-	
-	protected Long getPlayerReference() {
-		return this.player == null ? 0 : this.player.getIdentity(); 
 	}
 }

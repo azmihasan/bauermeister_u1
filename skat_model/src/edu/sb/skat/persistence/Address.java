@@ -2,12 +2,17 @@ package edu.sb.skat.persistence;
 
 import java.util.Comparator;
 
+import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbVisibility;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import edu.sb.skat.util.JsonProtectedPropertyStrategy;
+
 @Embeddable
+@JsonbVisibility(JsonProtectedPropertyStrategy.class)
 public class Address implements Comparable<Address> {
 
 	static private final Comparator<Address> COMPARATOR = Comparator.comparing(Address::getCountry)
@@ -33,6 +38,7 @@ public class Address implements Comparable<Address> {
 	@Column(nullable = false, updatable = true)
 	private String country;
 
+	@JsonbProperty
 	public String getStreet() {
 		return street;
 	}
@@ -41,6 +47,7 @@ public class Address implements Comparable<Address> {
 		this.street = street;
 	}
 
+	@JsonbProperty
 	public String getPostcode() {
 		return postcode;
 	}
@@ -49,6 +56,7 @@ public class Address implements Comparable<Address> {
 		this.postcode = postcode;
 	}
 
+	@JsonbProperty
 	public String getCity() {
 		return city;
 	}
@@ -57,6 +65,7 @@ public class Address implements Comparable<Address> {
 		this.city = city;
 	}
 
+	@JsonbProperty
 	public String getCountry() {
 		return country;
 	}
