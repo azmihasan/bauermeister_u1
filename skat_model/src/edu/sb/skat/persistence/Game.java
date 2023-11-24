@@ -99,6 +99,14 @@ public class Game extends BaseEntity {
 		this.table = table;
 	}
 
+	public Modifier getModifier() {
+		return modifier;
+	}
+
+	public void setModifier(Modifier modifier) {
+		this.modifier = modifier;
+	}
+
 	@JsonbProperty
 	public long[] getHandeReferences() {
 		return this.hands.stream().mapToLong(BaseEntity::getIdentity).sorted().toArray();
