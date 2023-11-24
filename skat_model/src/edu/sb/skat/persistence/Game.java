@@ -32,11 +32,19 @@ public class Game extends BaseEntity {
 	static public enum State {
 		DEAL, NEGOTIATE, ACTIVE, DONE
 	}
+	
+	static public enum Modifier {
+		HAND, POOR, BROKE, OUVERT
+	}
 
 	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, updatable = true)
 	private State state;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = true, updatable = true)
+	private Modifier modifier;
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "tableReference", nullable = false, updatable = false, insertable = true)
