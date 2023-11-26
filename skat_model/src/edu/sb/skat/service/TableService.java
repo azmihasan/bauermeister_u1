@@ -127,10 +127,8 @@ public class TableService {
 		}
 		
 		skatTable.setAlias(skatTableTemplate.getAlias());
-		skatTable.setValuation(skatTableTemplate.getValuation());
-		//skatTable.setVersion(skatTable.getVersion() + 1);
-		skatTable.setModificationTimestamp(System.currentTimeMillis());
-
+		skatTable.setBaseValuation(skatTableTemplate.getBaseValuation());
+		
 		if (avatarReference != null) {
 			final Document avatar = entityManager.find(Document.class, avatarReference);
 			if (avatar == null) throw new ClientErrorException(NOT_FOUND);
