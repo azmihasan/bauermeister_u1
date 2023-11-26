@@ -37,6 +37,10 @@ public class Game extends BaseEntity {
 		HAND, POOR, BROKE, OUVERT
 	}
 
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = true, updatable = true)
+	private Type type;
+	
 	@NotNull
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, updatable = true)
@@ -75,6 +79,16 @@ public class Game extends BaseEntity {
 		this.table = table;
 		this.hands = Collections.emptySet();
 	}
+	
+	@JsonbProperty
+	public Type getType() {
+		return type;
+	}
+
+	public void setType(Type type) {
+		this.type = type;
+	}
+	
 
 	@JsonbProperty
 	public State getState() {
