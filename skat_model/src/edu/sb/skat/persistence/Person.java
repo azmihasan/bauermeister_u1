@@ -194,11 +194,11 @@ public class Person extends BaseEntity {
 	}
 
 	@JsonbProperty
-	public byte getTablePosition() {
+	public Byte getTablePosition() {
 		return tablePosition;
 	}
 
-	public void setTablePosition(byte tablePosition) {
+	public void setTablePosition(Byte tablePosition) {
 		this.tablePosition = tablePosition;
 	}
 
