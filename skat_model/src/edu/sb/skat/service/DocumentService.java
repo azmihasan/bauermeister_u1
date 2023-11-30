@@ -29,8 +29,17 @@ import edu.sb.skat.util.HashCodes;
 
 @Path("documents")
 public class DocumentService {
-	private static final String QUERY_DOCUMENT = "select d from Document as d where d.hash = :hash";
+	private static final String QUERY_DOCUMENT = "select * from Document as d where d.hash = :hash";
 	
+	/*
+	documentIdentity BIGINT NOT NULL,
+	content LONGBLOB NOT NULL,
+	hash CHAR(64) NOT NULL,
+	type VARCHAR(63) NOT NULL,
+	PRIMARY KEY (documentIdentity),
+	FOREIGN KEY (documentIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
+	UNIQUE KEY (hash)
+	 * */
 	@GET
 	@Path("{id}")
 	@Produces(MediaType.WILDCARD)

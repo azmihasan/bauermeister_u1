@@ -71,20 +71,10 @@ CREATE TABLE Card (
 	UNIQUE KEY (suit, rank)
 );
 
-CREATE TABLE GameType (
-	gameTypeIdentity BIGINT NOT NULL,
-	variety ENUM("PASS", "SUIT", "NULL") NOT NULL,
-	suit ENUM("DIAMONDS", "HEARTS", "SPADES", "CLUBS") NULL,
-	value TINYINT NOT NULL,
-	PRIMARY KEY (gameTypeIdentity),
-	FOREIGN KEY (gameTypeIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
-	UNIQUE KEY (variety, suit)
-);
-
 CREATE TABLE Game (
 	gameIdentity BIGINT NOT NULL,
-	gameTypeReference BIGINT NULL,
 	tableReference BIGINT NOT NULL,
+	type ENUM("PASS", "DIAMONDS", "HEARTS", "SPADES", "CLUBS", "GRAND", "NULL") NULL,
 	modifier ENUM("HAND", "POOR", "BROKE", "OUVERT") NULL,
 	state ENUM("DEAL", "NEGOTIATE", "ACTIVE", "DONE") NOT NULL,
 	leftTrickCardReference BIGINT NULL,
@@ -92,7 +82,6 @@ CREATE TABLE Game (
 	rightTrickCardReference BIGINT NULL,
 	PRIMARY KEY (gameIdentity),
 	FOREIGN KEY (gameIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY (gameTypeReference) REFERENCES GameType (gameTypeIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
 	FOREIGN KEY (tableReference) REFERENCES SkatTable (tableIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
 	FOREIGN KEY (leftTrickCardReference) REFERENCES Card (cardIdentity) ON DELETE SET NULL ON UPDATE CASCADE,
 	FOREIGN KEY (middleTrickCardReference) REFERENCES Card (cardIdentity) ON DELETE SET NULL ON UPDATE CASCADE,
