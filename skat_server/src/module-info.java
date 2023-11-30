@@ -1,8 +1,0 @@
-/**
- * 
- */
-/**
- * 
- */
-module skat_server {
-}
