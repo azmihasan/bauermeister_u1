@@ -44,6 +44,19 @@ public class HandService {
 	
 	static private final String FIND_PASS_TYPE = "select t.identity from GameType as t where t.variety = edu.sb.skat.persistence.Variety.PASS";
 	
+	/*
+	handIdentity BIGINT NOT NULL,
+	gameReference BIGINT NOT NULL,
+	playerReference BIGINT NULL,
+	bid SMALLINT NULL,
+	solo BOOL NOT NULL,
+	points SMALLINT NOT NULL,
+	PRIMARY KEY (handIdentity),
+	FOREIGN KEY (handIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (gameReference) REFERENCES Game (gameIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (playerReference) REFERENCES Person (personIdentity) ON DELETE CASCADE ON UPDATE CASCADE
+
+	 * */
 	
 	@GET
 	@Path("{id}")
@@ -58,25 +71,31 @@ public class HandService {
 		
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
+		
 		final Game game = hand.getGame();
 
 		final Person player = hand.getPlayer();
 		if (player == null && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
 		if (player != null && player.getIdentity() != requester.getIdentity() && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
-		// TODO Fall für Gamestate Showdown? Es gibt kein State.SHOWDOWN Enum
+		
 		
 		return hand;
 	}
 	
 	@PATCH
 	@Path("{id}/negotiate")
+	@Produces(TEXT_PLAIN)
 	public long negotiate (
 			@PathParam("id") @Positive final long handIdentity,
 			@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
 			final long bid
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
-		//TODO finish implementation
+		final Person requester = entityManager.find(Person.class, requesterIdentity);
+		if (requester == null) throw new ClientErrorException(FORBIDDEN);
+		
+		
+		
 		return 0;
 	}
 	

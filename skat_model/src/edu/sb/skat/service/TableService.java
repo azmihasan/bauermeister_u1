@@ -62,7 +62,28 @@ public class TableService {
 			+ "(:lowerModificationTimestamp is null or t.modificationTimestamp >= :lowerModificationTimestamp)"; 
 	
 	
+	/*
+	tableIdentity BIGINT NOT NULL,
+	avatarReference BIGINT NOT NULL,
+	alias CHAR(32) NOT NULL,
+	baseValuation BIGINT NOT NULL,
+	PRIMARY KEY (tableIdentity),
+	FOREIGN KEY (tableIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (avatarReference) REFERENCES Document (documentIdentity) ON DELETE RESTRICT ON UPDATE CASCADE,
+	UNIQUE KEY (alias)
+	 * */
+	
+	
 	static private final String QUERY_CARDS = "select c.identity from Card as c";
+	
+	/*
+	cardIdentity BIGINT NOT NULL,
+	suit ENUM("DIAMONDS", "HEARTS", "SPADES", "CLUBS") NOT NULL,
+	rank ENUM("SEVEN", "EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING", "ACE") NOT NULL,
+	PRIMARY KEY (cardIdentity),
+	FOREIGN KEY (cardIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
+	UNIQUE KEY (suit, rank)
+	 * */
 	
 	static private final Comparator<SkatTable> SKAT_TABLE_COMPARATOR = Comparator
 			.comparing(SkatTable::getAlias);
@@ -71,13 +92,7 @@ public class TableService {
 	@Produces({APPLICATION_JSON, APPLICATION_XML})
     public SkatTable[] queryTables(
 		@QueryParam("resultOffset") @PositiveOrZero final Integer resultOffset,
-		@QueryParam("resultLimit") @PositiveOrZero final Integer resultLimit,
-		@QueryParam("alias") final String alias,
-		@QueryParam("valuation") @Positive final Integer valuation,
-		@QueryParam("upperCreationTimestamp") final Long upperCreationTimestamp,	
-    	@QueryParam("lowerCreationTimestamp") final Long lowerCreationTimestamp,	
-    	@QueryParam("upperModificationTimestamp") final Long upperModificationTimestamp,	
-    	@QueryParam("lowerModificationTimestamp") final Long lowerModificationTimestamp 
+		@QueryParam("resultLimit") @PositiveOrZero final Integer resultLimit
     ) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		
@@ -86,12 +101,6 @@ public class TableService {
 		if(resultLimit != null) query.setMaxResults(resultLimit);
 		
 		final SkatTable[] skatTables = query
-				.setParameter("alias", alias)
-				.setParameter("valuation", valuation)
-				.setParameter("upperCreationTimestamp", upperCreationTimestamp)
-	        	.setParameter("lowerCreationTimestamp", lowerCreationTimestamp)
-	        	.setParameter("upperModificationTimestamp", upperModificationTimestamp)
-	        	.setParameter("lowerModificationTimestamp", lowerModificationTimestamp)
 		        .getResultList()
 		        .stream()
 		        .map(identity -> entityManager.find(SkatTable.class, identity))
@@ -172,7 +181,7 @@ public class TableService {
 	@Produces({ TEXT_PLAIN })
 	public byte addPlayerToTable(
 		@PathParam("id") @Positive final long skatTableIdentity,
-		@PathParam("pos") @Min(0) @Max(2) final byte position,
+		@PathParam("tablePosition") @Min(0) @Max(2) final byte position,
 		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
@@ -211,7 +220,7 @@ public class TableService {
 	@Produces(TEXT_PLAIN)
 	public byte deletePlayer (
 		@PathParam("id") @Positive final long skatTableIdentity,
-		@PathParam("position") @Min(0) @Max(2) final byte position,
+		@PathParam("tablePosition") @Min(0) @Max(2) final byte position,
 		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
@@ -265,7 +274,6 @@ public class TableService {
 				
 		final Game game = new Game(skatTable);
 		entityManager.persist(game);
-		//Done Karten an die H�nde verteilen -> 4 H�nde erzeugen und Karten an sie verteilen (zuf�llig) | 3 Spieler + 1 Skat Hand -> 3*10(spieler) + 2(skat)
 		
 		final List<Hand> hands = new ArrayList<>();
 		for (final Person player: skatTable.getPlayers()) {
