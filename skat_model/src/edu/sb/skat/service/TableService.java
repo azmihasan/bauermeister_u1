@@ -54,36 +54,10 @@ public class TableService {
 	static private final Random RANDOMIZER = new SecureRandom();
 	
 	static private final String QUERY_SKAT_TABLE = "select t.identity from SkatTable as t where "
-			+ "(:alias is null or t.alias = :alias) and "
-			+ "(:valuation is null or t.valuation = :valuation) and"
-			+ "(:upperCreationTimestamp is null or t.creationTimestamp <= :upperCreationTimestamp) and "
-			+ "(:lowerCreationTimestamp is null or t.creationTimestamp >= :lowerCreationTimestamp) and "
-			+ "(:upperModificationTimestamp is null or t.modificationTimestamp <= :upperModificationTimestamp) and "
-			+ "(:lowerModificationTimestamp is null or t.modificationTimestamp >= :lowerModificationTimestamp)"; 
-	
-	
-	/*
-	tableIdentity BIGINT NOT NULL,
-	avatarReference BIGINT NOT NULL,
-	alias CHAR(32) NOT NULL,
-	baseValuation BIGINT NOT NULL,
-	PRIMARY KEY (tableIdentity),
-	FOREIGN KEY (tableIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY (avatarReference) REFERENCES Document (documentIdentity) ON DELETE RESTRICT ON UPDATE CASCADE,
-	UNIQUE KEY (alias)
-	 * */
+			+ "(:alias is null or t.alias = :alias) and "; 
 	
 	
 	static private final String QUERY_CARDS = "select c.identity from Card as c";
-	
-	/*
-	cardIdentity BIGINT NOT NULL,
-	suit ENUM("DIAMONDS", "HEARTS", "SPADES", "CLUBS") NOT NULL,
-	rank ENUM("SEVEN", "EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING", "ACE") NOT NULL,
-	PRIMARY KEY (cardIdentity),
-	FOREIGN KEY (cardIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
-	UNIQUE KEY (suit, rank)
-	 * */
 	
 	static private final Comparator<SkatTable> SKAT_TABLE_COMPARATOR = Comparator
 			.comparing(SkatTable::getAlias);
@@ -92,13 +66,15 @@ public class TableService {
 	@Produces({APPLICATION_JSON, APPLICATION_XML})
     public SkatTable[] queryTables(
 		@QueryParam("resultOffset") @PositiveOrZero final Integer resultOffset,
-		@QueryParam("resultLimit") @PositiveOrZero final Integer resultLimit
+		@QueryParam("resultLimit") @PositiveOrZero final Integer resultLimit,
+		@QueryParam("alias") final String alias
     ) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		
 		final TypedQuery<Long> query = entityManager.createQuery(QUERY_SKAT_TABLE, Long.class);
 		if(resultOffset != null) query.setFirstResult(resultOffset);
 		if(resultLimit != null) query.setMaxResults(resultLimit);
+		query.setParameter("alias", alias);
 		
 		final SkatTable[] skatTables = query
 		        .getResultList()
@@ -186,7 +162,7 @@ public class TableService {
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		final Person requester = entityManager.find(Person.class, requesterIdentity);
-		if (requester == null) throw new ClientErrorException(FORBIDDEN);
+		if (requester == null || requester.getGroup() == Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
 		
 		final SkatTable skatTable = entityManager.find(SkatTable.class, skatTableIdentity);
 		if (skatTable == null) throw new ClientErrorException(NOT_FOUND);
@@ -220,7 +196,7 @@ public class TableService {
 	@Produces(TEXT_PLAIN)
 	public byte deletePlayer (
 		@PathParam("id") @Positive final long skatTableIdentity,
-		@PathParam("tablePosition") @Min(0) @Max(2) final byte position,
+		@PathParam("tablePosition") @Min(0) @Max(2) final byte position, //Fehler im Klassendiagramm?
 		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
@@ -269,8 +245,8 @@ public class TableService {
 		final SkatTable skatTable = entityManager.find(SkatTable.class, tableIdentity);
 		System.out.println("TableService creates game" + skatTable);
 		if (skatTable == null) throw new ClientErrorException(NOT_FOUND);
-		if (!skatTable.getPlayers().contains(requester) || skatTable.getPlayers().size() < 3) throw new ClientErrorException(FORBIDDEN);
-		if (skatTable.getGames().stream().anyMatch(game -> game.getState() != State.DONE)) throw new ClientErrorException(CONFLICT);
+		if (!skatTable.getPlayers().contains(requester) || skatTable.getPlayers().size() <= 2) throw new ClientErrorException(FORBIDDEN);
+		if (skatTable.getGames().stream().anyMatch(game -> game.getState() != State.DONE)) throw new ClientErrorException(CONFLICT); //Ist mit "Showdown" State.DONE gemeint? 
 				
 		final Game game = new Game(skatTable);
 		entityManager.persist(game);
@@ -297,7 +273,7 @@ public class TableService {
 		for (int playerIndex = 0; playerIndex < 3; ++playerIndex) {
 			final Hand hand = hands.get(playerIndex);
 			
-			for (int loop = 0; loop < 10; ++loop) {
+			for (int loop = 0; loop <5; ++loop) {
 				final int cardIndex = RANDOMIZER.nextInt(cards.size());
 				final Card card = cards.remove(cardIndex);
 				hand.getCards().add(card);
@@ -320,9 +296,6 @@ public class TableService {
 
 		final Cache cache = entityManager.getEntityManagerFactory().getCache();
 		cache.evict(SkatTable.class, skatTable.getIdentity());
-		cache.evict(Game.class, game.getIdentity());
-		for (Person player : skatTable.getPlayers()) cache.evict(Person.class, player.getIdentity());
-		for (Hand hand : hands) cache.evict(Hand.class, hand.getIdentity());
 	
 		return game.getIdentity();
 	}

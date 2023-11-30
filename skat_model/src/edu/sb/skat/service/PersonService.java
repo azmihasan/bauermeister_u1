@@ -82,6 +82,7 @@ public class PersonService {
 		@QueryParam("postcode") String postcode, 
 		@QueryParam("street") String street, 
 		@QueryParam("city") String city
+		//add parameters for filtering the negotiation properties?
     ) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		final TypedQuery<Long> query = entityManager.createQuery(FILTER_PEOPLE_QUERY, Long.class);

@@ -44,20 +44,6 @@ public class HandService {
 	
 	static private final String FIND_PASS_TYPE = "select t.identity from GameType as t where t.variety = edu.sb.skat.persistence.Variety.PASS";
 	
-	/*
-	handIdentity BIGINT NOT NULL,
-	gameReference BIGINT NOT NULL,
-	playerReference BIGINT NULL,
-	bid SMALLINT NULL,
-	solo BOOL NOT NULL,
-	points SMALLINT NOT NULL,
-	PRIMARY KEY (handIdentity),
-	FOREIGN KEY (handIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY (gameReference) REFERENCES Game (gameIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY (playerReference) REFERENCES Person (personIdentity) ON DELETE CASCADE ON UPDATE CASCADE
-
-	 * */
-	
 	@GET
 	@Path("{id}")
 	@Produces({ APPLICATION_JSON, APPLICATION_XML })
@@ -94,6 +80,7 @@ public class HandService {
 		final Person requester = entityManager.find(Person.class, requesterIdentity);
 		if (requester == null) throw new ClientErrorException(FORBIDDEN);
 		
+		//TODO implement method
 		
 		
 		return 0;
@@ -135,95 +122,14 @@ public class HandService {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		final Person requester = entityManager.find(Person.class, requesterIdentity);
 		if (requester == null) throw new ClientErrorException(FORBIDDEN);
-		System.out.println("############# requester " + requester + "##########");
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
-		System.out.println("################ ONE ##############");
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
 		
-		System.out.println("############# handID " + handIdentity + "############");
-		System.out.println("############# cardRef " + cardReference + "############");
-		System.out.println("############# hand player " + hand.getPlayer().getIdentity() + "############");
-		System.out.println("############# requesterID " + requesterIdentity + "############");
-		
-		System.out.println("################ TWO ##############");
 		if (hand.getGame().getState() != State.ACTIVE) throw new ClientErrorException(CONFLICT);
 		if (hand.getGame().getType() == null) throw new ClientErrorException(CONFLICT);
-		System.out.println("################ FOUR ##############");
-		final Card card = hand.getCards().stream().filter(c -> c.getIdentity() == cardReference).findFirst().orElseThrow(() -> new ClientErrorException(FORBIDDEN));
-		System.out.println("################ FIVE ##############");
-		System.out.println("#1Card: " + card);
 		
 		
-		final Game game = hand.getGame();
-	
-		// allocate tricks
-		boolean alreadyReferenced = false;
-		if (game.getLeftTrickCard() == null) { game.setLeftTrickCard(card); alreadyReferenced = true ;}
-		if (game.getMiddleTrickCard() == null && alreadyReferenced != true) { game.setMiddleTrickCard(card); alreadyReferenced = true;}
-		if (game.getRightTrickCard() == null && alreadyReferenced != true) { game.setRightTrickCard(card); alreadyReferenced = true;}
-		
-		hand.getCards().removeIf(c -> c.getIdentity() == cardReference);
-		
-		if (game.getLeftTrickCard() != null && game.getMiddleTrickCard() != null && game.getRightTrickCard() != null) {
-			//TODO: stich verbuchen, welcher spieler hat stich gewonnen (left, middle, right)
-			System.out.println("###### all three tricks setted #######");
-			
-			short points = 0;
-			
-			short leftPoints= 0;
-			short middlePoints = 0;
-			short rightPoints = 0;
-			
-			// Augen/Wertigkeiten der jeweiligen Karten
-			// 7, 8, 9 = 0 punkte
-			// Bube/Jack = 2 punkt
-			// Dame = 3 punkte
-			// K�nig = 4 punkte
-			// 10 = 10 punkte
-			// Ass = 11 punkte
-			
-			
-			/*
-			final Hand[] playerHands = hand.getGame().getHands().stream().filter(h -> h.getPlayer() != null).sorted().toArray(Hand[]::new);
-			System.out.println("########## playerHands" + playerHands[0].toString() + "###########");
-			
-			Set<Card> leftCards = playerHands[0].getCards();
-			System.out.println("##### leftCards: " + leftCards + "#########");
-			// TODO Warum auch immer ist leftCards null
-			Card leftTrick = leftCards.stream().filter(c -> c.getIdentity() == game.getLeftTrickCard().getIdentity()).findFirst().orElse(null);
-			leftPoints = leftTrick.getRank().value();
-			System.out.println("########## points left" + leftPoints + "###########");
-			
-			Set<Card> middleCards = playerHands[1].getCards();
-			Card middleTrick = middleCards.stream().filter(c -> c == game.getLeftTrickCard()).findFirst().orElse(null);
-			middlePoints = middleTrick.getRank().value();
-			System.out.println("########## points middle" + middlePoints + "###########");
-			
-			Set<Card> rightCards = playerHands[2].getCards();
-			Card rightTrick = rightCards.stream().filter(c -> c == game.getLeftTrickCard()).findFirst().orElse(null);
-			rightPoints = rightTrick.getRank().value();
-			System.out.println("########## points right" + rightPoints + "###########");
-			*/
-			
-			//TODO PUNKTE VERRECHNEN
-			
-			
-			game.setLeftTrickCard(null);
-			game.setMiddleTrickCard(null);
-			game.setRightTrickCard(null);
-		}
-		
-		//TODO: wenn keine karten mehr auszuspielen sind, muss abgerechnet werden wer gewonnen hat -> erg verbuchen
-		
-		entityManager.flush();
-		
-		try {
-			entityManager.getTransaction().commit();
-		} catch (final RollbackException exception) {
-			throw new ClientErrorException(CONFLICT);
-		} finally {
-			entityManager.getTransaction().begin();
-		}
+		//TODO implement method
 		 
 		return card;
 	}
@@ -234,9 +140,8 @@ public class HandService {
 	@Produces(TEXT_PLAIN)
 	public long setGameType (
 		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-		@PathParam("id") @Positive final long handIdentity,
-		@QueryParam("cardReferenceToRemove") @PositiveOrZero long cardReferenceToRemove,
-		@QueryParam("cardReferenceToAdd") @PositiveOrZero long cardReferenceToAdd
+		@PathParam("id") @Positive final long handIdentity
+		// Spielart als Parameter?
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		final Person requester = entityManager.find(Person.class, requesterIdentity);
@@ -245,26 +150,9 @@ public class HandService {
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
 						
-		final Card cardToAdd = entityManager.find(Card.class, cardReferenceToAdd);
-		if(cardToAdd != null) hand.getCards().add(cardToAdd);
+		//TODO Implement method
 		
-		hand.getCards().removeIf(c -> c.getIdentity() == cardReferenceToRemove);
-
-		entityManager.flush();
-		
-		try {
-			entityManager.getTransaction().commit();
-		} catch (final RollbackException exception) {
-			throw new ClientErrorException(CONFLICT);
-		} finally {
-			entityManager.getTransaction().begin();
-		}
-		
-		final Cache cache = entityManager.getEntityManagerFactory().getCache();
-		cache.evict(Hand.class, hand.getIdentity());
-		cache.evict(Game.class, hand.getGame().getIdentity());
-		
-		return hand.getIdentity();
+		return 0;
 		
 	}
 	
