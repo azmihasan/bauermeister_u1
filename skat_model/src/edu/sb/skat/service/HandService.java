@@ -185,7 +185,7 @@ public class HandService {
 		
 		System.out.println("################ TWO ##############");
 		if (hand.getGame().getState() != State.ACTIVE) throw new ClientErrorException(CONFLICT);
-		if (hand.getGame().getGameType() == null || hand.getGame().getGameType().getVariety() == Variety.PASS) throw new ClientErrorException(CONFLICT);
+		if (hand.getGame().getType() == null) throw new ClientErrorException(CONFLICT);
 		System.out.println("################ FOUR ##############");
 		final Card card = hand.getCards().stream().filter(c -> c.getIdentity() == cardReference).findFirst().orElseThrow(() -> new ClientErrorException(FORBIDDEN));
 		System.out.println("################ FIVE ##############");
@@ -207,7 +207,6 @@ public class HandService {
 			System.out.println("###### all three tricks setted #######");
 			
 			short points = 0;
-			Person lastPlayerPlayed = game.getCurrentPlayer();
 			
 			short leftPoints= 0;
 			short middlePoints = 0;
@@ -287,11 +286,11 @@ public class HandService {
 		//if (hand.getPlayer() == null || hand.getPlayer().getIdentity() != requester.getIdentity()) throw new ClientErrorException(FORBIDDEN);
 		if (!hand.getSolo() || hand.getGame().getState() != State.ACTIVE) throw new ClientErrorException(CONFLICT);
 		
-		final GameType gameType = entityManager.find(GameType.class, gameTypeReference);
+		final Type gameType = entityManager.find(Type.class, gameTypeReference);
 		
 		if (gameType == null) throw new ClientErrorException(NOT_FOUND);
 		
-		hand.getGame().setGameType(gameType);
+		hand.getGame().setType(gameType);
 		hand.getGame().setModifier(modifier);
 
 		entityManager.flush();

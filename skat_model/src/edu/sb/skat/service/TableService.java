@@ -184,9 +184,9 @@ public class TableService {
 		
 		if (skatTable.getPlayers().contains(requester)) throw new ClientErrorException(BAD_REQUEST);
 		for (final Person player : skatTable.getPlayers()) 
-			if (player.getPosition() == position) throw new ClientErrorException(BAD_REQUEST);
+			if (player.getTablePosition() == position) throw new ClientErrorException(BAD_REQUEST);
 		
-		requester.setPosition(position);
+		requester.setTablePosition(position);
 		requester.setTable(skatTable);
 		
 		entityManager.flush();
@@ -221,10 +221,10 @@ public class TableService {
 		final SkatTable skatTable = entityManager.find(SkatTable.class, skatTableIdentity);
 		if (skatTable == null) throw new ClientErrorException(NOT_FOUND);
 			
-		final Person player = skatTable.getPlayers().stream().filter(p -> Objects.equals(p.getPosition(), position)).findFirst().orElse(null);
+		final Person player = skatTable.getPlayers().stream().filter(p -> Objects.equals(p.getTablePosition(), position)).findFirst().orElse(null);
 		if (player == null || (player != requester && requester.getGroup() != Group.ADMIN)) throw new ClientErrorException(FORBIDDEN);
 		
-		player.setPosition(null);
+		player.setTablePosition(null);
 		player.setTable(null);
 		
 		entityManager.flush();
