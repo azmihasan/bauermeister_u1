@@ -36,6 +36,7 @@ import edu.sb.skat.persistence.Game.State;
 import edu.sb.skat.persistence.Hand;
 import edu.sb.skat.persistence.Person;
 import edu.sb.skat.persistence.Person.Group;
+import edu.sb.skat.persistence.Type;
 import edu.sb.skat.util.RestJpaLifecycleProvider;
 
 @Path("hands")
@@ -102,15 +103,15 @@ public class HandService {
 		final int soloCount = (int) hand.getGame().getHands().stream().filter(h -> h.getSolo()).count();
 		switch (soloCount) {
 			case 0:
-				final GameType gameType = entityManager
+				final Type gameType = entityManager
 					.createQuery(FIND_PASS_TYPE, Long.class)
 					.getResultList()
 					.stream()
-			        .map(identity -> entityManager.find(GameType.class, identity))
+			        .map(identity -> entityManager.find(Type.class, identity))
 			        .filter(type -> type != null)
 			        .findFirst()
 			        .orElseThrow(() -> new ServerErrorException(Status.INTERNAL_SERVER_ERROR));
-				hand.getGame().setGameType(gameType);
+				hand.getGame().setType(gameType);
 				hand.getGame().setState(State.DONE);
 				break;
 			case 1:
