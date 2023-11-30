@@ -37,16 +37,32 @@ import edu.sb.skat.util.RestJpaLifecycleProvider;
 public class PersonService {
 	static private final String FILTER_PEOPLE_QUERY = "select p.identity from Person as p where "
 		+ "(:email is null or p.email = :email) AND "
-		+ "(:group is null or p.group = :group) AND "
-		+ "(:firstname is null or p.name.given = :firstname) AND "
-		+ "(:lastname is null or p.name.family = :lastname) AND "
+		+ "(:groupAlias is null or p.group = :group) AND "
+		+ "(:forename is null or p.name.given = :forename) AND "
+		+ "(:surname is null or p.name.family = :surname) AND "
 		+ "(:title is null or p.name.title = :title) AND "
 		+ "(:country is null or p.address.country = :country) AND "
 		+ "(:postcode is null or p.address.postcode = :postcode) AND "
 		+ "(:street is null or p.address.street = :street) AND "
-		+ "(:city is null or p.address.city = :city)"
-		+ "(:creationTimestamp is null or p.creationTimestamp = :creationTimestamp)"
-		+ "(:modificationTimestamp is null or p.modificationTimestamp = :modificationTimestamp)";
+		+ "(:city is null or p.address.city = :city)";
+	
+	/*
+	personIdentity BIGINT NOT NULL,
+	avatarReference BIGINT NOT NULL,
+	tableReference BIGINT NULL,
+	tablePosition TINYINT NULL,
+	email CHAR(128) NOT NULL,
+	passwordHash CHAR(64) NOT NULL,
+	groupAlias ENUM("USER", "ADMIN") NOT NULL,
+	balance BIGINT NOT NULL,
+	title VARCHAR(15) NULL,
+	surname VARCHAR(31) NOT NULL,
+	forename VARCHAR(31) NOT NULL,
+	street VARCHAR(63) NOT NULL,
+	postcode VARCHAR(15) NOT NULL,
+	city VARCHAR(63) NOT NULL,
+	country VARCHAR(63) NOT NULL,
+	*/
 	
 	static private final Comparator<Person> PERSON_COMPARATOR = Comparator
 		.comparing(Person::getName)
@@ -58,16 +74,14 @@ public class PersonService {
 		@QueryParam("resultOffset") @PositiveOrZero Integer resultOffset,
 		@QueryParam("resultLimit") @PositiveOrZero Integer resultLimit,
 		@QueryParam("email") String email,
-		@QueryParam("group") Person.Group group,
-		@QueryParam("firstname") String firstname, 
-		@QueryParam("lastname") String lastname,
+		@QueryParam("groupAlias") Person.Group group,
+		@QueryParam("forename") String forename, 
+		@QueryParam("surname") String surname,
 		@QueryParam("title") String title, 
 		@QueryParam("country") String country,
 		@QueryParam("postcode") String postcode, 
 		@QueryParam("street") String street, 
-		@QueryParam("city") String city,
-		@QueryParam("creationTimestamp") String creationTimestamp,
-		@QueryParam("modificationTimestamp") String modificationTimestamp
+		@QueryParam("city") String city
     ) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		final TypedQuery<Long> query = entityManager.createQuery(FILTER_PEOPLE_QUERY, Long.class);
@@ -77,15 +91,13 @@ public class PersonService {
 		final Person[] people = query
 			.setParameter("email", email)
 			.setParameter("group", group)
-			.setParameter("firstname", firstname)
-			.setParameter("lastname", lastname)
+			.setParameter("forename", forename)
+			.setParameter("surname", surname)
 			.setParameter("title", title)
 			.setParameter("country", country)
 			.setParameter("postcode", postcode)
 			.setParameter("street", street)
 			.setParameter("city", city)
-			.setParameter("creationTimestamp", creationTimestamp)
-			.setParameter("modificationTimestamp", modificationTimestamp)
 	        .getResultList()
 	        .stream()
 	        .map(identity -> entityManager.find(Person.class, identity))
