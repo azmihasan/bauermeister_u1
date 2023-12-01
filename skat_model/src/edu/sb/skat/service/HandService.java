@@ -36,6 +36,7 @@ import edu.sb.skat.persistence.Game.State;
 import edu.sb.skat.persistence.Hand;
 import edu.sb.skat.persistence.Person;
 import edu.sb.skat.persistence.Person.Group;
+import edu.sb.skat.persistence.SkatTable;
 import edu.sb.skat.persistence.Type;
 import edu.sb.skat.util.RestJpaLifecycleProvider;
 
@@ -70,8 +71,7 @@ public class HandService {
 	
 	@PATCH
 	@Path("{id}/negotiate")
-	@Produces(TEXT_PLAIN)
-	public long negotiate (
+	public void negotiate (
 			@PathParam("id") @Positive final long handIdentity,
 			@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
 			final long bid
@@ -80,10 +80,35 @@ public class HandService {
 		final Person requester = entityManager.find(Person.class, requesterIdentity);
 		if (requester == null) throw new ClientErrorException(FORBIDDEN);
 		
-		//TODO implement method
+		final Hand hand = entityManager.find(Hand.class, handIdentity);
+		if (hand == null) throw new ClientErrorException(NOT_FOUND);
 		
+		final Game game = hand.getGame();
 		
-		return 0;
+		hand.setBid((short) bid);
+		
+		int foldedHands = 0;
+		
+		for (Hand currentHand: game.getHands()) {
+			if (currentHand.getBid() < 0) {
+				foldedHands++;
+			}
+		}
+		if (foldedHands == 3) {
+			game.setState(State.DONE);
+		} else if (foldedHands == 2) {
+			game.setState(State.ACTIVE);
+		}
+		
+		entityManager.flush();
+		
+		try {
+			entityManager.getTransaction().commit();
+		} catch (final RollbackException exception) {
+			throw new ClientErrorException(CONFLICT);
+		} finally {
+			entityManager.getTransaction().begin();
+		}
 	}
 	
 	
