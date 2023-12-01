@@ -8,7 +8,11 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
+import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,6 +47,7 @@ import edu.sb.skat.util.RestJpaLifecycleProvider;
 @Path("hands")
 public class HandService {
 	
+	static private final Random RANDOMIZER = new SecureRandom();
 	static private final String FIND_PASS_TYPE = "select t.identity from GameType as t where t.variety = edu.sb.skat.persistence.Variety.PASS";
 	
 	@GET
@@ -139,10 +144,10 @@ public class HandService {
 	@PATCH
 	@Path("{id}/cards")
 	@Produces({APPLICATION_JSON, APPLICATION_XML})
-	public Card playCard (
+	public Set<Card> exchangeCard (
 		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
 		@PathParam("id") @Positive final long handIdentity,
-		@QueryParam("cardReference") @Positive long cardReference
+		final Set<Card> cards
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		final Person requester = entityManager.find(Person.class, requesterIdentity);
@@ -150,13 +155,37 @@ public class HandService {
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
 		
-		if (hand.getGame().getState() != State.ACTIVE) throw new ClientErrorException(CONFLICT);
+		if (hand.getGame().getState() == State.ACTIVE) throw new ClientErrorException(CONFLICT);
 		if (hand.getGame().getType() == null) throw new ClientErrorException(CONFLICT);
 		
 		
-		//TODO implement method
-		 
-		return card;
+		final Game game = hand.getGame();
+		
+		Set<Hand> hands = game.getHands();
+		
+		for ( Card c : cards) {
+			hand.getCards().remove(c);
+		}
+		
+		
+		
+		for (Hand h : hands) {
+			
+			if (h.getPlayer() == null) {
+				List<Card> cardstoDraw = new ArrayList<>();
+				cardstoDraw.addAll(h.getCards());
+				
+				for (int loop = 0; loop <cards.size() ; ++loop) {
+					final int cardIndex = RANDOMIZER.nextInt(cards.size());
+					Card card = cardstoDraw.remove(cardIndex);
+					hand.getCards().add(card);
+				}
+				
+			}
+		}
+		
+		
+		return hand.getCards();
 	}
 	
 	
