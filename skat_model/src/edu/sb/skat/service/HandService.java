@@ -184,6 +184,15 @@ public class HandService {
 			}
 		}
 		
+		entityManager.flush();
+		
+		try {
+			entityManager.getTransaction().commit();
+		} catch (final RollbackException exception) {
+			throw new ClientErrorException(CONFLICT);
+		} finally {
+			entityManager.getTransaction().begin();
+		}
 		
 		return hand.getCards();
 	}
@@ -204,6 +213,7 @@ public class HandService {
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
 						
+		hand.getGame().getType();
 		//TODO Implement method
 		
 		return 0;
