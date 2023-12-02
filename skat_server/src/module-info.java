@@ -1,4 +1,4 @@
-module edu.sb.skat.server {
+module edu.htw.skat.server {
 	requires transitive java.sql;
 	requires transitive java.activation;
 	requires transitive java.instrument;
@@ -9,6 +9,6 @@ module edu.sb.skat.server {
 	requires transitive jersey.server;
 	requires transitive jersey.container.jdk.http;
 
-	requires transitive edu.sb.skat.model;
-	exports edu.sb.skat.server;
+	requires transitive edu.htw.skat.model;
+	exports edu.htw.skat.server;
 }
