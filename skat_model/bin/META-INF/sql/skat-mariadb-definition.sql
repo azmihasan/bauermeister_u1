@@ -71,34 +71,54 @@ CREATE TABLE Card (
 	UNIQUE KEY (suit, rank)
 );
 
-CREATE TABLE Game (
-	gameIdentity BIGINT NOT NULL,
-	tableReference BIGINT NOT NULL,
-	type ENUM("PASS", "DIAMONDS", "HEARTS", "SPADES", "CLUBS", "GRAND", "NULL") NULL,
-	modifier ENUM("HAND", "POOR", "BROKE", "OUVERT") NULL,
-	state ENUM("DEAL", "NEGOTIATE", "ACTIVE", "DONE") NOT NULL,
-	leftTrickCardReference BIGINT NULL,
-	middleTrickCardReference BIGINT NULL,
-	rightTrickCardReference BIGINT NULL,
-	PRIMARY KEY (gameIdentity),
-	FOREIGN KEY (gameIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY (tableReference) REFERENCES SkatTable (tableIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY (leftTrickCardReference) REFERENCES Card (cardIdentity) ON DELETE SET NULL ON UPDATE CASCADE,
-	FOREIGN KEY (middleTrickCardReference) REFERENCES Card (cardIdentity) ON DELETE SET NULL ON UPDATE CASCADE,
-	FOREIGN KEY (rightTrickCardReference) REFERENCES Card (cardIdentity) ON DELETE SET NULL ON UPDATE CASCADE
-);
-
 CREATE TABLE Hand (
 	handIdentity BIGINT NOT NULL,
-	gameReference BIGINT NOT NULL,
 	playerReference BIGINT NULL,
 	bid SMALLINT NULL,
 	solo BOOL NOT NULL,
-	points SMALLINT NOT NULL,
 	PRIMARY KEY (handIdentity),
 	FOREIGN KEY (handIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY (gameReference) REFERENCES Game (gameIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
 	FOREIGN KEY (playerReference) REFERENCES Person (personIdentity) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE Game (
+	gameIdentity BIGINT NOT NULL,
+	tableReference BIGINT NOT NULL,
+	state ENUM("DEAL", "BET", "EXCHANGE", "ACTIVE", "DONE") NOT NULL,
+	type ENUM("PASS", "DIAMONDS", "HEARTS", "SPADES", "CLUBS", "GRAND", "NULL") NULL,
+	modifier ENUM("HAND", "POOR", "BROKE", "OUVERT") NULL,
+	winner ENUM("FOREHAND", "MIDDLEHAND", "REARHAND") NULL,
+	forehandReference BIGINT NOT NULL,
+	middlehandReference BIGINT NOT NULL,
+	rearhandReference BIGINT NOT NULL,
+	skatReference BIGINT NOT NULL,
+	PRIMARY KEY (gameIdentity),
+	FOREIGN KEY (gameIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (tableReference) REFERENCES SkatTable (tableIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (forehandReference) REFERENCES Hand (handIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (middlehandReference) REFERENCES Hand (handIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (rearhandReference) REFERENCES Hand (handIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (skatReference) REFERENCES Hand (handIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
+	UNIQUE KEY (forehandReference),
+	UNIQUE KEY (middlehandReference),
+	UNIQUE KEY (rearhandReference),
+	UNIQUE KEY (skatReference)
+);
+
+CREATE TABLE Trick (
+	trickIdentity BIGINT NOT NULL,
+	gameReference BIGINT NOT NULL,
+	lead ENUM("FOREHAND", "MIDDLEHAND", "REARHAND") NOT NULL,
+	winner ENUM("FOREHAND", "MIDDLEHAND", "REARHAND") NULL,
+	firstCardReference BIGINT NULL,
+	secondCardReference BIGINT NULL,
+	thirdCardReference BIGINT NULL,
+	PRIMARY KEY (trickIdentity),
+	FOREIGN KEY (trickIdentity) REFERENCES BaseEntity (identity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (gameReference) REFERENCES Game (gameIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (firstCardReference) REFERENCES Card (cardIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (secondCardReference) REFERENCES Card (cardIdentity) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (thirdCardReference) REFERENCES Card (cardIdentity) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE NetworkNegotiation (

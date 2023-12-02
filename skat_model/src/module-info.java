@@ -1,4 +1,4 @@
-module edu.sb.skat.model {
+module edu.htw.skat.model {
 	requires transitive java.logging;
 	requires transitive java.validation;
 	requires transitive javax.annotation.api;
@@ -9,10 +9,10 @@ module edu.sb.skat.model {
 	requires transitive eclipselink.minus.jpa;
 
 	// grants accessibility of the given packages to dependent projects
-	exports edu.sb.skat.persistence;
-	exports edu.sb.skat.service;
-	exports edu.sb.skat.util;
+	exports edu.htw.skat.persistence;
+	exports edu.htw.skat.service;
+	exports edu.htw.skat.util;
 
 	// grants reflective access to the given packages for JPA & JSON-B
-	opens edu.sb.skat.persistence;
+	opens edu.htw.skat.persistence;
 }
