@@ -205,8 +205,8 @@ public class HandService {
 	@Produces(TEXT_PLAIN)
 	public long setGameType (
 		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-		@PathParam("id") @Positive final long handIdentity
-		// Spielart als Parameter?
+		@PathParam("id") @Positive final long handIdentity,
+		final Game.Type gameType
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		final Person requester = entityManager.find(Person.class, requesterIdentity);
@@ -215,14 +215,12 @@ public class HandService {
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
 						
-//		hand.getGame().getType();
-//		//TODO Implement method
-//		
-		return 0;
+		Set<Game>games = hand.getPlayer().getTable().getGames();
+		for (Game g : games) {
+			g.setType(gameType);
+		}	
+		return gameType.value();
 		
 	}
-	
-	
-	
 }
 
