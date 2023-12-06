@@ -247,57 +247,56 @@ public class TableService {
 		if (skatTable == null) throw new ClientErrorException(NOT_FOUND);
 		if (!skatTable.getPlayers().contains(requester) || skatTable.getPlayers().size() <= 2) throw new ClientErrorException(FORBIDDEN);
 		if (skatTable.getGames().stream().anyMatch(game -> game.getState() != State.DONE)) throw new ClientErrorException(CONFLICT); //Ist mit "Showdown" State.DONE gemeint? 
-				
-//		final Game game = new Game(skatTable);
-//		entityManager.persist(game);
-//		
-//		final List<Hand> hands = new ArrayList<>();
-//		for (final Person player: skatTable.getPlayers()) {
-//			final Hand hand = new Hand(game, player);
-//			entityManager.persist(hand);
-//			hands.add(hand);
-//		}
-//		
-//		final Hand skat = new Hand(game, null);
-//		entityManager.persist(skat);
-//		hands.add(skat);
-//		
-//		final List<Card> cards = entityManager
-//			.createQuery(QUERY_CARDS, Long.class)
-//	        .getResultList()
-//	        .stream()
-//	        .map(identity -> entityManager.find(Card.class, identity))
-//	        .filter(card -> card != null)
-//	        .collect(Collectors.toList());
-//		
-//		for (int playerIndex = 0; playerIndex < 3; ++playerIndex) {
-//			final Hand hand = hands.get(playerIndex);
-//			
-//			for (int loop = 0; loop <5; ++loop) {
-//				final int cardIndex = RANDOMIZER.nextInt(cards.size());
-//				final Card card = cards.remove(cardIndex);
-//				hand.getCards().add(card);
-//			}
-//		}
-//		
-//		hands.get(hands.size() - 1).getCards().addAll(cards);
-//		game.setState(State.NEGOTIATE);
-//		
-//		
-//		entityManager.flush();
-//		
-//		try {
-//			entityManager.getTransaction().commit();
-//		} catch (final RollbackException exception) {
-//			throw new ClientErrorException(CONFLICT);
-//		} finally {
-//			entityManager.getTransaction().begin();
-//		}
-//
-//		final Cache cache = entityManager.getEntityManagerFactory().getCache();
-//		cache.evict(SkatTable.class, skatTable.getIdentity());
-//	
-//		return game.getIdentity();
-		return 0;
+		
+		final List<Hand> hands = new ArrayList<>();
+		for (final Person player: skatTable.getPlayers()) {
+			final Hand hand = new Hand(player);
+			entityManager.persist(hand);
+			hands.add(hand);
+		}
+		
+		final Hand skat = new Hand(null);
+		entityManager.persist(skat);
+		hands.add(skat);
+		
+		final List<Card> cards = entityManager
+			.createQuery(QUERY_CARDS, Long.class)
+	        .getResultList()
+	        .stream()
+	        .map(identity -> entityManager.find(Card.class, identity))
+	        .filter(card -> card != null)
+	        .collect(Collectors.toList());
+		
+		for (int playerIndex = 0; playerIndex < 3; ++playerIndex) {
+			final Hand hand = hands.get(playerIndex);
+			
+			for (int loop = 0; loop <5; ++loop) {
+				final int cardIndex = RANDOMIZER.nextInt(cards.size());
+				final Card card = cards.remove(cardIndex);
+				hand.getCards().add(card);
+			}
+		}
+		
+		hands.get(hands.size() - 1).getCards().addAll(cards);
+		
+		final Game game = new Game(skatTable, hands.get(0), hands.get(1), hands.get(2), hands.get(3));
+		entityManager.persist(game);
+		
+		game.setState(State.BET);
+		
+		entityManager.flush();
+		
+		try {
+			entityManager.getTransaction().commit();
+		} catch (final RollbackException exception) {
+			throw new ClientErrorException(CONFLICT);
+		} finally {
+			entityManager.getTransaction().begin();
+		}
+
+		final Cache cache = entityManager.getEntityManagerFactory().getCache();
+		cache.evict(SkatTable.class, skatTable.getIdentity());
+	
+		return game.getIdentity();
 	}
 }

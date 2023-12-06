@@ -53,12 +53,16 @@ public class HandService {
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
 		
-//		final Game game = hand.getGame();
-//
-//		final Person player = hand.getPlayer();
-//		if (player == null && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
-//		if (player != null && player.getIdentity() != requester.getIdentity() && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
-//		
+		final Game game = requester.getTable().getGames().stream()
+				.filter(g -> g.getForehand() == hand || g.getMiddlehand() == hand || g.getRearhand() == hand)
+				.findFirst()
+				.orElse(null);
+		
+		final Person player = hand.getPlayer();
+		if (player == null && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
+		if (player != null && player.getIdentity() != requester.getIdentity() && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
+		if (game.getState() != State.DONE) throw new ClientErrorException(FORBIDDEN);
+		
 		return hand;
 	}
 	
@@ -76,32 +80,40 @@ public class HandService {
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
 		
-//		final Game game = hand.getGame();
-//		
-//		hand.setBid((short) bid);
-//		
-//		int foldedHands = 0;
-//		
-//		for (Hand currentHand: game.getHands()) {
-//			if (currentHand.getBid() < 0) {
-//				foldedHands++;
-//			}
-//		}
-//		if (foldedHands == 3) {
-//			game.setState(State.DONE);
-//		} else if (foldedHands == 2) {
-//			game.setState(State.ACTIVE);
-//		}
-//		
-//		entityManager.flush();
-//		
-//		try {
-//			entityManager.getTransaction().commit();
-//		} catch (final RollbackException exception) {
-//			throw new ClientErrorException(CONFLICT);
-//		} finally {
-//			entityManager.getTransaction().begin();
-//		}
+		final Game game = requester.getTable().getGames().stream()
+				.filter(g -> g.getForehand() == hand || g.getMiddlehand() == hand || g.getRearhand() == hand)
+				.findFirst()
+				.orElse(null);
+		
+		hand.setBid((short) bid);
+		
+		int foldedHands = 0;
+		
+		final List<Hand> hands = new ArrayList<>();
+		hands.add(game.getForehand());
+		hands.add(game.getMiddlehand());
+		hands.add(game.getRearhand());
+		
+		for (Hand currentHand: hands) {
+			if (currentHand.getBid() < 0) {
+				foldedHands++;
+			}
+		}
+		if (foldedHands == 3) {
+			game.setState(State.DONE);
+		} else if (foldedHands == 2) {
+			game.setState(State.ACTIVE);
+		}
+		
+		entityManager.flush();
+		
+		try {
+			entityManager.getTransaction().commit();
+		} catch (final RollbackException exception) {
+			throw new ClientErrorException(CONFLICT);
+		} finally {
+			entityManager.getTransaction().begin();
+		}
 	}
 	
 	
@@ -119,14 +131,23 @@ public class HandService {
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
 		
+		final Game game = requester.getTable().getGames().stream()
+				.filter(g -> g.getForehand() == hand || g.getMiddlehand() == hand || g.getRearhand() == hand)
+				.findFirst()
+				.orElse(null);
+		
+		final List<Hand> hands = new ArrayList<>();
+		hands.add(game.getForehand());
+		hands.add(game.getMiddlehand());
+		hands.add(game.getRearhand());
+		
 		final Person player = hand.getPlayer();
-//		final Hand playerHand = hand.getGame().getHands().stream().filter(h -> h.getSolo()).findFirst().orElseThrow(() -> new ClientErrorException(FORBIDDEN));
-//
-//		if (player == null && requester.getGroup() != Group.ADMIN && playerHand.getPlayer().getIdentity() != requester.getIdentity()) throw new ClientErrorException(FORBIDDEN);
-//		if (player != null && (player.getIdentity() != requester.getIdentity() && requester.getGroup() != Group.ADMIN)) throw new ClientErrorException(FORBIDDEN);
-//		
-//		return hand.getCards().stream().sorted().toArray(Card[]::new);
-		return null;
+		//final Hand playerHand = hands.stream().filter(h -> h.isSolo()).findFirst().orElseThrow(() -> new ClientErrorException(FORBIDDEN));
+
+		if (player == null && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
+		if (player != null && (player.getIdentity() != requester.getIdentity() && requester.getGroup() != Group.ADMIN)) throw new ClientErrorException(FORBIDDEN);
+		
+		return hand.getCards().stream().sorted().toArray(Card[]::new);
 	}
 	
 	
@@ -144,47 +165,38 @@ public class HandService {
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
 		
-//		if (hand.getGame().getState() == State.ACTIVE) throw new ClientErrorException(CONFLICT);
-//		if (hand.getGame().getType() == null) throw new ClientErrorException(CONFLICT);
-//		
-//		
-//		final Game game = hand.getGame();
-//		
-//		Set<Hand> hands = game.getHands();
-//		
-//		for ( Card c : cards) {
-//			hand.getCards().remove(c);
-//		}
-//		
-//		
-//		
-//		for (Hand h : hands) {
-//			
-//			if (h.getPlayer() == null) {
-//				List<Card> cardstoDraw = new ArrayList<>();
-//				cardstoDraw.addAll(h.getCards());
-//				
-//				for (int loop = 0; loop <cards.size() ; ++loop) {
-//					final int cardIndex = RANDOMIZER.nextInt(cards.size());
-//					Card card = cardstoDraw.remove(cardIndex);
-//					hand.getCards().add(card);
-//				}
-//				
-//			}
-//		}
-//		
-//		entityManager.flush();
-//		
-//		try {
-//			entityManager.getTransaction().commit();
-//		} catch (final RollbackException exception) {
-//			throw new ClientErrorException(CONFLICT);
-//		} finally {
-//			entityManager.getTransaction().begin();
-//		}
-//		
-//		return hand.getCards();
-		return null;
+		final Game game = requester.getTable().getGames().stream()
+				.filter(g -> g.getForehand() == hand || g.getMiddlehand() == hand || g.getRearhand() == hand)
+				.findFirst()
+				.orElse(null);
+		
+		if (game.getState() == State.ACTIVE) throw new ClientErrorException(CONFLICT);
+		if (game.getType() == null) throw new ClientErrorException(CONFLICT);
+		
+		for ( Card c : cards) {
+			hand.getCards().remove(c);
+		}	
+
+		List<Card> cardstoDraw = new ArrayList<>();
+		cardstoDraw.addAll(game.getSkat().getCards());
+				
+		for (int loop = 0; loop < cards.size() ; ++loop) {
+			final int cardIndex = RANDOMIZER.nextInt(cards.size());
+			Card card = cardstoDraw.remove(cardIndex);
+			hand.getCards().add(card);
+		}
+		
+		entityManager.flush();
+		
+		try {
+			entityManager.getTransaction().commit();
+		} catch (final RollbackException exception) {
+			throw new ClientErrorException(CONFLICT);
+		} finally {
+			entityManager.getTransaction().begin();
+		}
+		
+		return hand.getCards();
 	}
 	
 	
