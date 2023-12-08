@@ -377,4 +377,9 @@ public class Game extends BaseEntity {
 	public short getReadhandPoints () {
 		return (short) (this.tricks.stream().filter(trick -> trick.getWinner() == Position.REARHAND).mapToInt(Trick::getPoints).sum() + (this.forehand.isSolo() ? this.skat.getPoints() : 0));
 	}
+	
+	@JsonbTransient
+	public Hand[] getHands() {
+		return new Hand[] { this.forehand, this.middlehand, this.rearhand, this.skat };
+	}
 }

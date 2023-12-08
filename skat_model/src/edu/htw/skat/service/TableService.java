@@ -2,9 +2,7 @@ package edu.htw.skat.service;
 
 import static edu.htw.skat.service.BasicAuthenticationReceiverFilter.REQUESTER_IDENTITY;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -13,7 +11,6 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -53,47 +50,50 @@ import edu.htw.skat.util.RestJpaLifecycleProvider;
 public class TableService {
 	static private final Random RANDOMIZER = new SecureRandom();
 	
-	static private final String QUERY_SKAT_TABLE = "select t.identity from SkatTable as t where "
-			+ "(:alias is null or t.alias = :alias) and "; 
+	static private final String QUERY_SKAT_TABLES = "select t.identity from SkatTable as t where "
+			+ "(:lowerModified is null or t.modified >= :lowerModified) and "
+			+ "(:upperModified is null or t.modified <= :upperModified) and "
+			+ "(:alias is null or t.alias = :alias)"; 
 	
 	
 	static private final String QUERY_CARDS = "select c.identity from Card as c";
 	
-	static private final Comparator<SkatTable> SKAT_TABLE_COMPARATOR = Comparator
-			.comparing(SkatTable::getAlias);
+	static private final Comparator<SkatTable> SKAT_TABLE_COMPARATOR = Comparator.comparing(SkatTable::getAlias);
 	
 	@GET   
-	@Produces({APPLICATION_JSON, APPLICATION_XML})
+	@Produces(APPLICATION_JSON)
     public SkatTable[] queryTables(
 		@QueryParam("resultOffset") @PositiveOrZero final Integer resultOffset,
 		@QueryParam("resultLimit") @PositiveOrZero final Integer resultLimit,
+		@QueryParam("lower-modified") Long lowerModified,
+		@QueryParam("upper-modified") Long upperModified,
 		@QueryParam("alias") final String alias
     ) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		
-		final TypedQuery<Long> query = entityManager.createQuery(QUERY_SKAT_TABLE, Long.class);
+		final TypedQuery<Long> query = entityManager.createQuery(QUERY_SKAT_TABLES, Long.class);
 		if(resultOffset != null) query.setFirstResult(resultOffset);
 		if(resultLimit != null) query.setMaxResults(resultLimit);
-		query.setParameter("alias", alias);
-		
 		final SkatTable[] skatTables = query
-		        .getResultList()
-		        .stream()
-		        .map(identity -> entityManager.find(SkatTable.class, identity))
-		        .filter(skatTable -> skatTable != null)
-		        .sorted(SKAT_TABLE_COMPARATOR)
-		        .toArray(SkatTable[]::new);
+			.setParameter("lowerModified", lowerModified)
+			.setParameter("upperModified", upperModified)
+			.setParameter("alias", alias)
+		    .getResultList()
+		    .stream()
+		    .map(identity -> entityManager.find(SkatTable.class, identity))
+		    .filter(skatTable -> skatTable != null)
+		    .sorted(SKAT_TABLE_COMPARATOR)
+		    .toArray(SkatTable[]::new);
 		
         return skatTables;
     }
 	
 	
 	@POST
-	@Consumes({ APPLICATION_JSON, APPLICATION_XML })
+	@Consumes(APPLICATION_JSON)
 	@Produces(TEXT_PLAIN)
 	public long changeSkatTable (
 			@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-			@QueryParam("avatarReference") Long avatarReference,
 			@NotNull @Valid SkatTable skatTableTemplate
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
@@ -103,34 +103,34 @@ public class TableService {
 		final boolean insertEnabled = skatTableTemplate.getIdentity() == 0;
 
 		final SkatTable skatTable;
+		final Document avatar;
 		if (insertEnabled) {
-			if (avatarReference == null) avatarReference = 1L;
 			skatTable = new SkatTable();
+			avatar = entityManager.find(Document.class, skatTableTemplate.getAvatar() == null ? 1L : skatTableTemplate.getAvatar().getIdentity());
+			if (avatar == null) throw new ClientErrorException(NOT_FOUND);
 		} else {
 			skatTable = entityManager.find(SkatTable.class, skatTableTemplate.getIdentity());
 			if (skatTable == null) throw new ClientErrorException(NOT_FOUND);
+			avatar = skatTableTemplate.getAvatar() == null ? null : entityManager.find(Document.class, skatTableTemplate.getAvatar().getIdentity());
 		}
 		
+		skatTable.setModified(System.currentTimeMillis());
+		skatTable.setVersion(skatTableTemplate.getVersion());
 		skatTable.setAlias(skatTableTemplate.getAlias());
 		skatTable.setBaseValuation(skatTableTemplate.getBaseValuation());
+		if (avatar != null) skatTable.setAvatar(avatar);
 		
-		if (avatarReference != null) {
-			final Document avatar = entityManager.find(Document.class, avatarReference);
-			if (avatar == null) throw new ClientErrorException(NOT_FOUND);
-			skatTable.setAvatar(avatar);
-		}
-		
-		if (insertEnabled)
-			entityManager.persist(skatTable);
-		else
-			entityManager.flush();
-
 		try {
+			if (insertEnabled)
+				entityManager.persist(skatTable);
+			else
+				entityManager.flush();
+			
 			entityManager.getTransaction().commit();
 		} catch (final RollbackException exception) {
 			throw new ClientErrorException(CONFLICT);
 		} finally {
-			entityManager.getTransaction().begin();
+			if (!entityManager.getTransaction().isActive()) entityManager.getTransaction().begin();
 		}
 
 		return skatTable.getIdentity();
@@ -139,7 +139,7 @@ public class TableService {
 	
 	@GET
 	@Path("{id}")
-	@Produces({ APPLICATION_JSON, APPLICATION_XML })
+	@Produces(APPLICATION_JSON)
 	public SkatTable findSkatTable (
 		@PathParam("id") @Positive final long skatTableIdentity,
 		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity
@@ -154,7 +154,7 @@ public class TableService {
 	
 	@PUT
 	@Path("{id}/players/{pos}")
-	@Produces({ TEXT_PLAIN })
+	@Produces(TEXT_PLAIN)
 	public byte addPlayerToTable(
 		@PathParam("id") @Positive final long skatTableIdentity,
 		@PathParam("tablePosition") @Min(0) @Max(2) final byte position,
@@ -167,21 +167,21 @@ public class TableService {
 		final SkatTable skatTable = entityManager.find(SkatTable.class, skatTableIdentity);
 		if (skatTable == null) throw new ClientErrorException(NOT_FOUND);
 		
-		if (skatTable.getPlayers().contains(requester)) throw new ClientErrorException(BAD_REQUEST);
+		if (skatTable.getPlayers().contains(requester)) throw new ClientErrorException(CONFLICT);
 		for (final Person player : skatTable.getPlayers()) 
-			if (player.getTablePosition() == position) throw new ClientErrorException(BAD_REQUEST);
+			if (player.getTablePosition() == position) throw new ClientErrorException(CONFLICT);
 		
 		requester.setTablePosition(position);
 		requester.setTable(skatTable);
 		
-		entityManager.flush();
-		
 		try {
+			entityManager.flush();
+			
 			entityManager.getTransaction().commit();
 		} catch (final RollbackException exception) {
 			throw new ClientErrorException(CONFLICT);
 		} finally {
-			entityManager.getTransaction().begin();
+			if (!entityManager.getTransaction().isActive()) entityManager.getTransaction().begin();
 		}
 		
 		final Cache cache = entityManager.getEntityManagerFactory().getCache();
@@ -196,7 +196,7 @@ public class TableService {
 	@Produces(TEXT_PLAIN)
 	public byte deletePlayer (
 		@PathParam("id") @Positive final long skatTableIdentity,
-		@PathParam("tablePosition") @Min(0) @Max(2) final byte position, //Fehler im Klassendiagramm?
+		@PathParam("tablePosition") @Min(0) @Max(2) final byte position,
 		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
@@ -206,20 +206,21 @@ public class TableService {
 		final SkatTable skatTable = entityManager.find(SkatTable.class, skatTableIdentity);
 		if (skatTable == null) throw new ClientErrorException(NOT_FOUND);
 			
-		final Person player = skatTable.getPlayers().stream().filter(p -> Objects.equals(p.getTablePosition(), position)).findFirst().orElse(null);
-		if (player == null || (player != requester && requester.getGroup() != Group.ADMIN)) throw new ClientErrorException(FORBIDDEN);
+		final Person player = skatTable.getPlayers().stream().filter(p -> p.getTablePosition() == position).findFirst().orElse(null);
+		if (player == null) throw new ClientErrorException(CONFLICT);
+		if (player != requester && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
 		
 		player.setTablePosition(null);
 		player.setTable(null);
-		
-		entityManager.flush();
 	
 		try {
+			entityManager.flush();
+			
 			entityManager.getTransaction().commit();
 		} catch (final RollbackException exception) {
 			throw new ClientErrorException(CONFLICT);
 		} finally {
-			entityManager.getTransaction().begin();
+			if (!entityManager.getTransaction().isActive()) entityManager.getTransaction().begin();
 		}
 		
 		 final Cache cache = entityManager.getEntityManagerFactory().getCache();
@@ -231,7 +232,7 @@ public class TableService {
 	
 	@POST
 	@Path("{id}/games")
-	@Consumes({ APPLICATION_JSON, APPLICATION_XML })
+	@Consumes(APPLICATION_JSON)
 	@Produces(TEXT_PLAIN)
 	public long addGameToTable (
 		@PathParam("id") @Positive final long tableIdentity,
@@ -243,10 +244,11 @@ public class TableService {
 		if (requester == null) throw new ClientErrorException(FORBIDDEN);
 		
 		final SkatTable skatTable = entityManager.find(SkatTable.class, tableIdentity);
-		System.out.println("TableService creates game" + skatTable);
 		if (skatTable == null) throw new ClientErrorException(NOT_FOUND);
-		if (!skatTable.getPlayers().contains(requester) || skatTable.getPlayers().size() <= 2) throw new ClientErrorException(FORBIDDEN);
-		if (skatTable.getGames().stream().anyMatch(game -> game.getState() != State.DONE)) throw new ClientErrorException(CONFLICT); //Ist mit "Showdown" State.DONE gemeint? 
+
+		if (!skatTable.getPlayers().contains(requester)) throw new ClientErrorException(FORBIDDEN);
+		if (skatTable.getPlayers().size() <= 2) throw new ClientErrorException(CONFLICT);
+		if (skatTable.getGames().stream().anyMatch(game -> game.getState() != State.DONE)) throw new ClientErrorException(CONFLICT);
 		
 		final List<Hand> hands = new ArrayList<>();
 		for (final Person player: skatTable.getPlayers()) {
@@ -259,6 +261,14 @@ public class TableService {
 		entityManager.persist(skat);
 		hands.add(skat);
 		
+		try {
+			entityManager.getTransaction().commit();
+		} catch (final RollbackException exception) {
+			throw new ClientErrorException(CONFLICT);
+		} finally {
+			entityManager.getTransaction().begin();
+		}
+		
 		final List<Card> cards = entityManager
 			.createQuery(QUERY_CARDS, Long.class)
 	        .getResultList()
@@ -270,28 +280,24 @@ public class TableService {
 		for (int playerIndex = 0; playerIndex < 3; ++playerIndex) {
 			final Hand hand = hands.get(playerIndex);
 			
-			for (int loop = 0; loop <5; ++loop) {
-				final int cardIndex = RANDOMIZER.nextInt(cards.size());
-				final Card card = cards.remove(cardIndex);
+			for (int loop = 0; loop < 10; ++loop) {
+				final Card card = cards.remove(RANDOMIZER.nextInt(cards.size()));
 				hand.getCards().add(card);
 			}
 		}
+		skat.getCards().addAll(cards);
 		
-		hands.get(hands.size() - 1).getCards().addAll(cards);
-		
-		final Game game = new Game(skatTable, hands.get(0), hands.get(1), hands.get(2), hands.get(3));
-		entityManager.persist(game);
-		
+		final Game game = new Game(skatTable, hands.get(0), hands.get(1), hands.get(2), skat);
 		game.setState(State.BET);
-		
-		entityManager.flush();
-		
+
 		try {
+			entityManager.persist(game);
+			
 			entityManager.getTransaction().commit();
 		} catch (final RollbackException exception) {
 			throw new ClientErrorException(CONFLICT);
 		} finally {
-			entityManager.getTransaction().begin();
+			if (!entityManager.getTransaction().isActive()) entityManager.getTransaction().begin();
 		}
 
 		final Cache cache = entityManager.getEntityManagerFactory().getCache();

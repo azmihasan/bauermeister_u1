@@ -2,7 +2,6 @@ package edu.htw.skat.service;
 
 import static edu.htw.skat.service.BasicAuthenticationReceiverFilter.REQUESTER_IDENTITY;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
@@ -11,7 +10,6 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import java.util.Comparator;
 
 import javax.persistence.EntityManager;
-import javax.persistence.RollbackException;
 import javax.persistence.TypedQuery;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -36,6 +34,8 @@ import edu.htw.skat.util.RestJpaLifecycleProvider;
 @Path("people")
 public class PersonService {
 	static private final String FILTER_PEOPLE_QUERY = "select p.identity from Person as p where "
+		+ "(:lowerModified is null or p.modified >= :lowerModified) and "
+		+ "(:upperModified is null or p.modified <= :upperModified) and "	
 		+ "(:email is null or p.email = :email) and "
 		+ "(:group is null or p.group = :group) and "
 		+ "(:title is null or p.name.title = :title) and "
@@ -55,6 +55,8 @@ public class PersonService {
     public Person[] queryPeople(
 		@QueryParam("result-offset") @PositiveOrZero Integer resultOffset,
 		@QueryParam("result-limit") @PositiveOrZero Integer resultLimit,
+		@QueryParam("lower-modified") Long lowerModified,
+		@QueryParam("upper-modified") Long upperModified,
 		@QueryParam("email") String email,
 		@QueryParam("group") Person.Group group,
 		@QueryParam("forename") String forename, 
@@ -71,6 +73,8 @@ public class PersonService {
 		if(resultLimit != null) query.setMaxResults(resultLimit);
 		
 		final Person[] people = query
+			.setParameter("lowerModified", lowerModified)
+			.setParameter("upperModified", upperModified)
 			.setParameter("email", email)
 			.setParameter("group", group)
 			.setParameter("surname", surname)

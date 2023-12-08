@@ -2,7 +2,6 @@ package edu.htw.skat.service;
 
 import static edu.htw.skat.service.BasicAuthenticationReceiverFilter.REQUESTER_IDENTITY;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
@@ -10,6 +9,8 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -18,6 +19,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.RollbackException;
 import javax.validation.constraints.Positive;
 import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PATCH;
@@ -37,7 +39,6 @@ import edu.htw.skat.util.RestJpaLifecycleProvider;
 public class HandService {
 	
 	static private final Random RANDOMIZER = new SecureRandom();
-	static private final String FIND_PASS_TYPE = "select t.identity from GameType as t where t.variety = edu.sb.skat.persistence.Variety.PASS";
 	
 	@GET
 	@Path("{id}")
@@ -53,25 +54,28 @@ public class HandService {
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
 		
-		final Game game = requester.getTable().getGames().stream()
-				.filter(g -> g.getForehand() == hand || g.getMiddlehand() == hand || g.getRearhand() == hand)
-				.findFirst()
-				.orElse(null);
-		
-		final Person player = hand.getPlayer();
-		if (player == null && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
-		if (player != null && player.getIdentity() != requester.getIdentity() && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
-		if (game.getState() != State.DONE) throw new ClientErrorException(FORBIDDEN);
+		if (requester.getGroup() != Group.ADMIN) {
+			final Game game = (hand.getPlayer() == null ? requester : hand.getPlayer()).getTable().getGames().stream().max(Comparator.comparing(Game::getIdentity)).get();
+			final Hand playerHand = hand.getPlayer() == null
+					? (game.getForehand().getPlayer() == requester ? game.getForehand() : (game.getMiddlehand().getPlayer() == requester ? game.getMiddlehand() : game.getRearhand()))
+					: hand;
+			
+			final Person player = hand.getPlayer();
+			if (player == null && game.getState() != State.DONE && (game.getState() != State.EXCHANGE || !playerHand.isSolo())) throw new ClientErrorException(FORBIDDEN);
+			if (player != null && game.getState() != State.DONE && requester != player) throw new ClientErrorException(FORBIDDEN);
+		}
 		
 		return hand;
 	}
 	
+	
 	@PATCH
-	@Path("{id}/negotiate")
-	public void negotiate (
+	@Path("{id}/bid")
+	@Consumes(TEXT_PLAIN)
+	public void bid (
 			@PathParam("id") @Positive final long handIdentity,
 			@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-			final long bid
+			@Positive final Short bid
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		final Person requester = entityManager.find(Person.class, requesterIdentity);
@@ -79,35 +83,24 @@ public class HandService {
 		
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
+		if (hand.getPlayer() != requester) throw new ClientErrorException(FORBIDDEN);
 		
 		final Game game = requester.getTable().getGames().stream()
 				.filter(g -> g.getForehand() == hand || g.getMiddlehand() == hand || g.getRearhand() == hand)
 				.findFirst()
-				.orElse(null);
+				.get();
 		
-		hand.setBid((short) bid);
+		if (bid != null && bid < Arrays.stream(game.getHands()).filter(h -> h.getBid() != null).mapToInt(Hand::getBid).max().getAsInt()) throw new ClientErrorException(CONFLICT);
+		hand.setBid(bid);
 		
-		int foldedHands = 0;
-		
-		final List<Hand> hands = new ArrayList<>();
-		hands.add(game.getForehand());
-		hands.add(game.getMiddlehand());
-		hands.add(game.getRearhand());
-		
-		for (Hand currentHand: hands) {
-			if (currentHand.getBid() < 0) {
-				foldedHands++;
-			}
+		if (bid == null && Arrays.stream(game.getHands()).filter(h -> h.getPlayer() != null && h.getBid() != null).count() == 1) {
+			final Hand soloHand = Arrays.stream(game.getHands()).filter(h -> h.getPlayer() != null && h.getBid() != null).findAny().get();
+			soloHand.setSolo(true);
 		}
-		if (foldedHands == 3) {
-			game.setState(State.DONE);
-		} else if (foldedHands == 2) {
-			game.setState(State.ACTIVE);
-		}
-		
-		entityManager.flush();
 		
 		try {
+			entityManager.flush();
+			
 			entityManager.getTransaction().commit();
 		} catch (final RollbackException exception) {
 			throw new ClientErrorException(CONFLICT);
@@ -116,7 +109,7 @@ public class HandService {
 		}
 	}
 	
-	
+	// TODO implement new requirements
 	@GET
 	@Path("{id}/cards")
 	@Produces(APPLICATION_JSON)
@@ -142,7 +135,6 @@ public class HandService {
 		hands.add(game.getRearhand());
 		
 		final Person player = hand.getPlayer();
-		//final Hand playerHand = hands.stream().filter(h -> h.isSolo()).findFirst().orElseThrow(() -> new ClientErrorException(FORBIDDEN));
 
 		if (player == null && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
 		if (player != null && (player.getIdentity() != requester.getIdentity() && requester.getGroup() != Group.ADMIN)) throw new ClientErrorException(FORBIDDEN);
@@ -151,6 +143,8 @@ public class HandService {
 	}
 	
 	
+	
+	//  TODO implement new method REMOVE hands/{id}/cards/{cid}
 	@PATCH
 	@Path("{id}/cards")
 	@Produces(APPLICATION_JSON)
@@ -199,7 +193,7 @@ public class HandService {
 		return hand.getCards();
 	}
 	
-	
+	// TODO implement new requirements	
 	@PATCH
 	@Path("{id}/gameType")
 	@Produces(TEXT_PLAIN)
