@@ -26,11 +26,13 @@ import javax.ws.rs.PATCH;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 
 import edu.htw.skat.persistence.Card;
 import edu.htw.skat.persistence.Game;
 import edu.htw.skat.persistence.Hand;
 import edu.htw.skat.persistence.Person;
+import edu.htw.skat.persistence.Game.Modifier;
 import edu.htw.skat.persistence.Game.State;
 import edu.htw.skat.persistence.Person.Group;
 import edu.htw.skat.util.RestJpaLifecycleProvider;
@@ -108,8 +110,6 @@ public class HandService {
 			entityManager.getTransaction().begin();
 		}
 	}
-	
-	// TODO implement new requirements
 	@GET
 	@Path("{id}/cards")
 	@Produces(APPLICATION_JSON)
@@ -129,19 +129,97 @@ public class HandService {
 				.findFirst()
 				.orElse(null);
 		
-		final List<Hand> hands = new ArrayList<>();
-		hands.add(game.getForehand());
-		hands.add(game.getMiddlehand());
-		hands.add(game.getRearhand());
-		
 		final Person player = hand.getPlayer();
 
-		if (player == null && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
-		if (player != null && (player.getIdentity() != requester.getIdentity() && requester.getGroup() != Group.ADMIN)) throw new ClientErrorException(FORBIDDEN);
+		if (player != requester && requester.getGroup() != Group.ADMIN) throw new ClientErrorException(FORBIDDEN);
+		if (game.getState() == State.EXCHANGE && game.getModifier() == null) {
+			List<Card> returnCards = new ArrayList<Card>();
+			returnCards.addAll(hand.getCards());
+			returnCards.addAll(game.getSkat().getCards());
+			return (Card[]) returnCards.toArray();
+			
+		}
 		
 		return hand.getCards().stream().sorted().toArray(Card[]::new);
 	}
 	
+	@PATCH
+	@Path("/{id}/game/modifier")
+	public void setModifier (
+		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
+		@PathParam("id") @Positive final long handIdentity,
+		@QueryParam("modifierReference") Modifier modifierReference
+	) {
+		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
+		final Person requester = entityManager.find(Person.class, requesterIdentity);
+		if (requester == null) throw new ClientErrorException(FORBIDDEN);
+		
+		final Hand hand = entityManager.find(Hand.class, handIdentity);
+		if (hand == null) throw new ClientErrorException(NOT_FOUND);
+		
+		final Game game = requester.getTable().getGames().stream()
+				.filter(g -> g.getForehand() == hand || g.getMiddlehand() == hand || g.getRearhand() == hand)
+				.findFirst()
+				.orElse(null);
+		
+		if (requester != hand.getPlayer()) throw new ClientErrorException(FORBIDDEN);
+		if (hand.isSolo() || game.getState() != State.EXCHANGE) throw new ClientErrorException(CONFLICT);
+		
+		game.setModifier(modifierReference);
+		
+		try {
+			entityManager.flush();
+			
+			entityManager.getTransaction().commit();
+		} catch (final RollbackException exception) {
+			throw new ClientErrorException(CONFLICT);
+		} finally {
+			entityManager.getTransaction().begin();
+		}
+	}
+	
+	@PATCH
+	@Path("{id}/cards/{cid}")
+	@Consumes(TEXT_PLAIN)
+	public void exchangeCard (
+		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
+		@PathParam("id") @Positive final long handIdentity,
+		@PathParam("cid") @Positive final long cardIdentity,
+		final Card exchangeCard
+	) {
+		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
+		final Person requester = entityManager.find(Person.class, requesterIdentity);
+		if (requester == null) throw new ClientErrorException(FORBIDDEN);
+		final Hand hand = entityManager.find(Hand.class, handIdentity);
+		if (hand == null) throw new ClientErrorException(NOT_FOUND);
+		final Card card = entityManager.find(Card.class, cardIdentity);
+		if (card == null) throw new ClientErrorException(NOT_FOUND);
+		
+		Game game = requester.getTable().getGames().stream()
+				.filter(g -> g.getForehand() == hand || g.getMiddlehand() == hand || g.getRearhand() == hand)
+				.findFirst()
+				.orElse(null);
+		
+		Hand skat = game.getSkat();
+		
+		if (requester != hand.getPlayer()) throw new ClientErrorException(FORBIDDEN);
+		if (hand.isSolo() || game.getModifier() != null) throw new ClientErrorException(FORBIDDEN);
+		if (hand.getCards().contains(card) || skat.getCards().contains(exchangeCard) ) throw new ClientErrorException(NOT_FOUND);
+		
+		hand.getCards().remove(card);
+		hand.getCards().add(exchangeCard);
+		skat.getCards().remove(exchangeCard);
+		
+		try {
+			entityManager.flush();
+			
+			entityManager.getTransaction().commit();
+		} catch (final RollbackException exception) {
+			throw new ClientErrorException(CONFLICT);
+		} finally {
+			entityManager.getTransaction().begin();
+		}
+	}
 	
 	
 	//  TODO implement new method REMOVE hands/{id}/cards/{cid}
@@ -193,9 +271,8 @@ public class HandService {
 		return hand.getCards();
 	}
 	
-	// TODO implement new requirements	
 	@PATCH
-	@Path("{id}/gameType")
+	@Path("{id}/game/type")
 	@Produces(TEXT_PLAIN)
 	public long setGameType (
 		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
@@ -208,11 +285,28 @@ public class HandService {
 		
 		final Hand hand = entityManager.find(Hand.class, handIdentity);
 		if (hand == null) throw new ClientErrorException(NOT_FOUND);
-						
-		Set<Game>games = hand.getPlayer().getTable().getGames();
-		for (Game g : games) {
-			g.setType(gameType);
-		}	
+		if (requester == hand.getPlayer()) throw new ClientErrorException(FORBIDDEN);
+		if (hand.isSolo() == true) throw new ClientErrorException(FORBIDDEN);
+		
+		final Game game = requester.getTable().getGames().stream()
+				.filter(g -> g.getForehand() == hand || g.getMiddlehand() == hand || g.getRearhand() == hand)
+				.findFirst()
+				.orElse(null);
+		
+		if (game.getState() == Game.State.EXCHANGE) throw new ClientErrorException(CONFLICT);
+		game.setType(gameType);
+		game.setState(Game.State.ACTIVE);
+		
+		entityManager.flush();
+		
+		try {
+			entityManager.getTransaction().commit();
+		} catch (final RollbackException exception) {
+			throw new ClientErrorException(CONFLICT);
+		} finally {
+			entityManager.getTransaction().begin();
+		}
+		
 		return gameType.value();
 		
 	}
