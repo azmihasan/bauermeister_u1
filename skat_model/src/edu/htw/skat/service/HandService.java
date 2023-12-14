@@ -20,6 +20,7 @@ import javax.persistence.RollbackException;
 import javax.validation.constraints.Positive;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PATCH;
@@ -31,10 +32,12 @@ import javax.ws.rs.QueryParam;
 import edu.htw.skat.persistence.Card;
 import edu.htw.skat.persistence.Game;
 import edu.htw.skat.persistence.Hand;
+import edu.htw.skat.persistence.Hand.Position;
 import edu.htw.skat.persistence.Person;
 import edu.htw.skat.persistence.Game.Modifier;
 import edu.htw.skat.persistence.Game.State;
 import edu.htw.skat.persistence.Person.Group;
+import edu.htw.skat.persistence.Trick;
 import edu.htw.skat.util.RestJpaLifecycleProvider;
 
 @Path("hands")
@@ -309,6 +312,57 @@ public class HandService {
 		
 		return gameType.value();
 		
+	}
+	
+	@DELETE
+	@Path("{id}/cards/{cid}")
+	public long removeCards(
+		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
+		@PathParam("id") @Positive final long handIdentity,
+		@PathParam("cid") @Positive final long cardIdentity
+	) {
+		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
+		
+		final Person requester = entityManager.find(Person.class, requesterIdentity);
+		if (requester == null) throw new ClientErrorException(FORBIDDEN);
+		final Hand hand = entityManager.find(Hand.class, handIdentity);
+		if (hand == null) throw new ClientErrorException(NOT_FOUND);
+		final Card card = entityManager.find(Card.class, cardIdentity);
+		if (card == null) throw new ClientErrorException(NOT_FOUND);
+		
+		if (requester != hand.getPlayer()) throw new ClientErrorException(FORBIDDEN);
+		// how to determine the given hand's turn?
+		//if (hand.getIdentity() != ) throw new ClientErrorException(CONFLICT);
+		if (!hand.getCards().contains(card)) throw new ClientErrorException(CONFLICT);
+		
+		final Game game = requester.getTable().getGames().stream()
+				.filter(g -> g.getForehand() == hand || g.getMiddlehand() == hand || g.getRearhand() == hand)
+				.findFirst()
+				.orElse(null);
+		if (game.getState() != State.ACTIVE) throw new ClientErrorException(CONFLICT);
+		
+		entityManager.remove(hand.getCards());
+		
+		Trick gameTricks = (Trick) game.getTricks().stream().sorted();
+		// creating a new trick if necessary?
+		if (gameTricks == null)
+			gameTricks = new Trick(game, Position.FOREHAND);
+			
+		hand.getCards().add(gameTricks.getFirstCard());
+		hand.getCards().add(gameTricks.getSecondCard());
+		hand.getCards().add(gameTricks.getThirdCard());
+		
+		try {
+			entityManager.flush();
+			
+			entityManager.getTransaction().commit();
+		} catch (final RollbackException exception) {
+			throw new ClientErrorException(CONFLICT);
+		} finally {
+			entityManager.getTransaction().begin();
+		}
+		
+		return hand.getIdentity();
 	}
 }
 
