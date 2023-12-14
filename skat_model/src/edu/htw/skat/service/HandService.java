@@ -7,13 +7,10 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
-import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.RollbackException;
@@ -43,8 +40,6 @@ import edu.htw.skat.util.RestJpaLifecycleProvider;
 @Path("hands")
 public class HandService {
 	
-	static private final Random RANDOMIZER = new SecureRandom();
-	
 	@GET
 	@Path("{id}")
 	@Produces(APPLICATION_JSON)
@@ -72,7 +67,6 @@ public class HandService {
 		
 		return hand;
 	}
-	
 	
 	@PATCH
 	@Path("{id}/bid")
@@ -113,6 +107,7 @@ public class HandService {
 			entityManager.getTransaction().begin();
 		}
 	}
+	
 	@GET
 	@Path("{id}/cards")
 	@Produces(APPLICATION_JSON)
@@ -224,56 +219,6 @@ public class HandService {
 		}
 	}
 	
-	
-	//  TODO implement new method REMOVE hands/{id}/cards/{cid}
-	@PATCH
-	@Path("{id}/cards")
-	@Produces(APPLICATION_JSON)
-	public Set<Card> exchangeCard (
-		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
-		@PathParam("id") @Positive final long handIdentity,
-		final Set<Card> cards
-	) {
-		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
-		final Person requester = entityManager.find(Person.class, requesterIdentity);
-		if (requester == null) throw new ClientErrorException(FORBIDDEN);
-		final Hand hand = entityManager.find(Hand.class, handIdentity);
-		if (hand == null) throw new ClientErrorException(NOT_FOUND);
-		
-		final Game game = requester.getTable().getGames().stream()
-				.filter(g -> g.getForehand() == hand || g.getMiddlehand() == hand || g.getRearhand() == hand)
-				.findFirst()
-				.orElse(null);
-		
-		if (game.getState() == State.ACTIVE) throw new ClientErrorException(CONFLICT);
-		if (game.getType() == null) throw new ClientErrorException(CONFLICT);
-		
-		for ( Card c : cards) {
-			hand.getCards().remove(c);
-		}	
-
-		List<Card> cardstoDraw = new ArrayList<>();
-		cardstoDraw.addAll(game.getSkat().getCards());
-				
-		for (int loop = 0; loop < cards.size() ; ++loop) {
-			final int cardIndex = RANDOMIZER.nextInt(cards.size());
-			Card card = cardstoDraw.remove(cardIndex);
-			hand.getCards().add(card);
-		}
-		
-		entityManager.flush();
-		
-		try {
-			entityManager.getTransaction().commit();
-		} catch (final RollbackException exception) {
-			throw new ClientErrorException(CONFLICT);
-		} finally {
-			entityManager.getTransaction().begin();
-		}
-		
-		return hand.getCards();
-	}
-	
 	@PATCH
 	@Path("{id}/game/type")
 	@Produces(TEXT_PLAIN)
@@ -365,4 +310,3 @@ public class HandService {
 		return hand.getIdentity();
 	}
 }
-
