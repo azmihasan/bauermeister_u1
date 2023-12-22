@@ -148,7 +148,7 @@ public class Trick extends BaseEntity {
 	 * Sets the winner, equaling the follow-up trick's lead.
 	 * @param winner the winner's position, or {@code null} for none
 	 */
-	protected void setWinner (final Position winner) {
+	public void setWinner (final Position winner) {
 		this.winner = winner;
 	}
 

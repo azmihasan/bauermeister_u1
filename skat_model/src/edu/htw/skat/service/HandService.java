@@ -143,7 +143,7 @@ public class HandService {
 			if (player == null && game.getState() != State.DONE && (!hand.isSolo() || game.getState() != State.EXCHANGE)) throw new ClientErrorException(FORBIDDEN);
 		}
 		
-		List<Card> returnCards = new ArrayList<Card>(hand.getCards());
+		final List<Card> returnCards = new ArrayList<Card>(hand.getCards());
 		if (requester != null && hand.isSolo() && game.getState() == State.EXCHANGE && game.getModifier() != null)
 			returnCards.addAll(game.getSkat().getCards());
 		
@@ -277,7 +277,7 @@ public class HandService {
 	@Path("{id}/cards/{cid}")
 	@Consumes(APPLICATION_JSON)
 	@Produces(TEXT_PLAIN)
-	public long removeCards(
+	public long playCard(
 			@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity,
 			@PathParam("id") @Positive final long handIdentity,
 			@PathParam("cid") @Positive final long cardIdentity
@@ -299,25 +299,29 @@ public class HandService {
 				.orElseThrow(() -> new ClientErrorException(FORBIDDEN));
 		if (game.getState() != State.ACTIVE) throw new ClientErrorException(FORBIDDEN);
 		
-		Trick gameTricks = game.getTricks().stream().max(Comparator.comparing(Trick::getIdentity)).orElse(null);
-		if (gameTricks.getFirstCard() == null) {
+		Trick gameTrick = game.getTricks().stream().max(Comparator.comparing(Trick::getIdentity)).orElse(null);
+		if (gameTrick.getFirstCard() == null) {
 			//TODO: check if it is the players turn to play the first card
-			gameTricks.setFirstCard(card);
-		} else if (gameTricks.getSecondCard() == null) {
+			gameTrick.setFirstCard(card);
+		} else if (gameTrick.getSecondCard() == null) {
 			//TODO: check if it is the players turn to play the second card
-			gameTricks.setSecondCard(card);
-		} else if (gameTricks.getThirdCard() == null) {
+			gameTrick.setSecondCard(card);
+		} else if (gameTrick.getThirdCard() == null) {
 			//TODO: check if it is the players turn to play the third card
-			gameTricks.setThirdCard(card);
+			// check which player win the trick?
+			// if the 10th trick of this game, then the game is over. The winner must be determined by amount of player point. The game state should be "DONE".
+			gameTrick.setThirdCard(card);
+			//gameTrick.setWinner();
+			
 		} else {
 			//TODO: check if it is the players turn to play the first card
 			final Position position = game.getForehand() == hand
 					? Position.FOREHAND
 					: (game.getMiddlehand() == hand ? Position.MIDDLEHAND : Position.REARHAND);
-			gameTricks = new Trick(game, position);
+			gameTrick = new Trick(game, position);
 			
 			try {
-				entityManager.persist(gameTricks);
+				entityManager.persist(gameTrick);
 				
 				entityManager.getTransaction().commit();
 			} finally {
@@ -328,7 +332,7 @@ public class HandService {
 			final Cache cache = entityManager.getEntityManagerFactory().getCache();
 			cache.evict(Game.class, game.getIdentity());
 			
-			gameTricks.setFirstCard(card);
+			gameTrick.setFirstCard(card);
 		}
 		
 		try {
