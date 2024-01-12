@@ -3,110 +3,111 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
-		<meta charset="utf-8" />
 		<meta name="author" content="Sascha Baumeister" />
 		<meta name="dcterms.rightsHolder" content="Sascha Baumeister" />
 		<meta name="dcterms.rights" content="all rights reserved" />
-		<meta name="dcterms.dateCopyrighted" content="2019" />
+		<meta name="dcterms.dateCopyrighted" content="2023" />
+		<meta charset="utf-8" />
 
 		<title>Web-Skat</title>
 		<link rel="stylesheet" type="text/css" href="skat.css" />
 		<link rel="icon" type="image/png" href="skat.png"/>
 
-		<script type="module" src="js/welcome-controller.js"></script>
-		<script type="module" src="js/preferences-controller.js"></script>
-		<script type="module" src="js/tables-controller.js"></script>
+		<script type="module" src="js/authentication-tab-controller.js"></script>
+		<script type="module" src="js/preferences-tab-controller.js"></script>
+		<script type="module" src="js/table-selection-tab-controller.js"></script>
+		<script type="module" src="js/table-play-tab-controller.js"></script>
 
-		<template id="welcome-template">
-			<section class="welcome">
+		<template class="authentication">
+			<section class="authentication">
 				<fieldset>
 					<legend>Login</legend>
 					<div>
 						<label class="horizontal">Email</label>
-						<input type="email" name="email" required="required" maxlength="128" />
+						<input type="email" class="email" required="required" maxlength="128" />
 					</div>
 					<div>
 						<label class="horizontal">Password</label>
-						<input type="password" name="password" required="required" maxlength="16" />
+						<input type="password" class="password" required="required" maxlength="16" />
 					</div>
 				</fieldset>
-				<button type="button" title="perform authentication">login</button>
+				<button type="button" class="login" title="perform authentication">login</button>
 			</section>
 		</template>
 
-		<template id="preferences-template">
-			<section class="preferences">
-				<fieldset>
+		<template class="preferences-editor">
+			<section class="preferences-editor">
+				<fieldset class="avatar">
 					<legend>Avatar</legend>
 					<div>
 						<label class="horizontal">Drop image to change</label>
-						<img ondragover="event.preventDefault()" ondrop="event.preventDefault()" />
+						<img class="avatar" ondragover="event.preventDefault()" ondrop="event.preventDefault()" />
 					</div>
 				</fieldset>
-				<fieldset>
+				<fieldset class="account">
 					<legend>Account</legend>
 					<div>
 						<label class="horizontal">Email</label>
-						<input type="email" required="required" maxlength="127" />
+						<input type="email" class="email" required="required" maxlength="127" />
 					</div>
 					<div>
 						<label class="horizontal">Password</label>
-						<input type="password" maxlength="16" />
+						<input type="password" class="password" maxlength="16" />
 					</div>
 					<div>
 						<label class="horizontal">Group</label>
-						<input type="text" required="required" maxlength="5" />
+						<input type="text" class="group" required="required" maxlength="5" />
 					</div>
 					<div>
 						<label class="horizontal">Title</label>
-						<input type="text" maxlength="15" />
+						<input type="text" class="title" maxlength="15" />
 					</div>
 					<div>
 						<label class="horizontal">Forename</label>
-						<input type="text" required="required" maxlength="31" />
+						<input type="text" class="forename" required="required" maxlength="31" />
 					</div>
 					<div>
 						<label class="horizontal">Surname</label>
-						<input type="text" required="required" maxlength="31" />
+						<input type="text" class="surname" required="required" maxlength="31" />
 					</div>
 				</fieldset>
-				<fieldset>
+				<fieldset class="address">
 					<legend>Address</legend>
 					<div>
 						<label class="horizontal">Street</label>
-						<input type="text" required="required" maxlength="63" />
+						<input type="text" class="street" required="required" maxlength="63" />
 					</div>
 					<div>
 						<label class="horizontal">ZIP</label>
-						<input type="text" required="required" maxlength="15" />
+						<input type="text" class="postcode" required="required" maxlength="15" />
 					</div>
 					<div>
 						<label class="horizontal">City</label>
-						<input type="text" required="required" maxlength="63" />
+						<input type="text" class="city" required="required" maxlength="63" />
 					</div>
 					<div>
 						<label class="horizontal">Country</label>
-						<input type="text" required="required" maxlength="63" />
+						<input type="text" class="country" required="required" maxlength="63" />
 					</div>
 				</fieldset>
-				<fieldset>
+				<fieldset class="phones">
 					<legend>Phones</legend>
 					<div>
 						<div class="phones"></div>
-						<button type="button" title="add phone">add</button>
+						<button type="button" class="add" title="add phone">add</button>
 					</div>
 				</fieldset>
 
-				<button type="button" title="flush changes">send</button>
+				<button type="button" class="submit" title="submit changes">submit</button>
 			</section>
 		</template>
 
 
-		<template id="tables-template">
-			<section class="tables">
+		<template class="table-selection">
+			<section class="table-selection">
 				<fieldset>
 					<legend>Available Skat Tables</legend>
-					<table>
+					<table class="skat">
 						<thead><tr><th>Table</th><th>Seats</th></tr></thead>
 						<tbody></tbody>
 					</table>
@@ -114,12 +115,12 @@
 			</section>
 		</template>
 
-		<template id="tables-row-template">
+		<template class="table-selection-row">
 				<tr>
-					<td><img /></td>
-					<td><img src="image/available.png" title="seat 1" /></td>
-					<td><img src="image/available.png" title="seat 2" /></td>
-					<td><img src="image/available.png" title="seat 3" /></td>
+					<td><img class="table" ondragover="event.preventDefault()" ondrop="event.preventDefault()" /></td>
+					<td><img class="fore" src="image/available.png" title="seat 1" /></td>
+					<td><img class="middle" src="image/available.png" title="seat 2" /></td>
+					<td><img class="rear" src="image/available.png" title="seat 3" /></td>
 				</tr>
 		</template>
 	</head>
@@ -127,17 +128,23 @@
 
 	<body>
 		<header>
-			<nav class="horizontal">
-				<ul>
-					<li><a>Login</a></li>
-					<li><a>Preferences</a></li>
-					<li><a>Skat Tables</a></li>
-				</ul>
+			<nav class="tab">
+				<button type="button" class="authentication">Login</button>
+				<button type="button" class="preferences-editor">Preferences</button>
+				<button type="button" class="table-selection">Tables</button>
+				<button type="button" class="table-play">Play Skat</button>
 			</nav>
 		</header>
-		<main></main>
+
+		<main>
+			<article class="left"></article>
+			<article class="center"></article>
+			<article class="right"></article>
+		</main>
+
 		<footer>
-			<output></output>
+			<label>Nachricht</label>
+			<input type="text" class="message" readonly="true" />
 		</footer>
 	</body>
 </html>
