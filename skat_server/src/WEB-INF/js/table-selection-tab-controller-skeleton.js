@@ -63,7 +63,7 @@ export default class TableSelectionTabController extends TabController {
 
 		this.messageElement.value = "";
 		try {
-			let response;
+			/*let response;
 
 			response = await fetch("/services/documents", { method: "POST", headers: {"Content-Type": avatarFile.type}, body: avatarFile });
 			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
@@ -75,8 +75,7 @@ export default class TableSelectionTabController extends TabController {
 			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
 			this.properties.sessionOwner.version += 1;
 
-			this.rootSection.querySelector("img.avatar").src = "/services/documents/" + avatarReference + "?cache-bust=" + Date.now();
-			this.messageElement.value = "ok.";
+			this.rootSection.querySelector("img.avatar").src = "/services/documents/" + avatarReference + "?cache-bust=" + Date.now();*/
 
 			this.messageElement.value = "ok.";
 		} catch (error) {
