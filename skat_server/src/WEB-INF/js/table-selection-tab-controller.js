@@ -42,7 +42,17 @@ export default class TableSelectionTabController extends TabController {
 	async displayTables () {
 		this.messageElement.value = ""
 		try {
-			// TODO
+			console.log("AA")
+			//ToDo
+			const tableSelectionRowTemplate = document.querySelector("template.table-selection-row");
+			//for of loop
+			const tableSelectionRow = tableSelectionRowTemplate.content.cloneNode(true).firstElementChild;
+
+			const requesterTableElement = tableSelectionRow.querySelector("img");
+			requesterTableElement.src = "/services/documents/" + "berlin.png" + "?cache-bust=" + Date.now();
+			this.rootSection.getElementsByTagName("tbody")[0].append(tableSelectionRow);
+			//for loop end
+
 		} catch (error) {
 			this.messageElement.value = "" + (error.message || error);
 			console.log(error);
@@ -63,7 +73,7 @@ export default class TableSelectionTabController extends TabController {
 
 		this.messageElement.value = "";
 		try {
-			/*let response;
+			let response;
 
 			response = await fetch("/services/documents", { method: "POST", headers: {"Content-Type": avatarFile.type}, body: avatarFile });
 			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
@@ -75,7 +85,7 @@ export default class TableSelectionTabController extends TabController {
 			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
 			this.properties.sessionOwner.version += 1;
 
-			this.rootSection.querySelector("img.avatar").src = "/services/documents/" + avatarReference + "?cache-bust=" + Date.now();*/
+			this.rootSection.querySelector("img.table").src = "/services/documents/" + avatarReference + "?cache-bust=" + Date.now();
 
 			this.messageElement.value = "ok.";
 		} catch (error) {
