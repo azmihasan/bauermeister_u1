@@ -73,9 +73,19 @@ export default class TableSelectionTabController extends TabController {
 				console.log(tableAvatarElement)
 				tableAvatarElement.src = `/services/documents/${table.avatar.identity}?cache-bust=${Date.now()}`;
 		
-				// TODO:
 				// Seats avatar
-	
+				const seatClasses = ["fore", "middle", "rear"];
+				seatClasses.forEach((seatClass, i) => {
+					const playerAvatarElement = tableSelectionRow.querySelector(`.${seatClass}`);
+					console.log("playerAvatarElement :" + i)
+					console.log(playerAvatarElement)
+
+					// TODO:
+					// if (table.players[i]) {
+					// 	playerAvatarElement.src = `/services/documents/${table.players[i].avatar.identity}?cache-bust=${Date.now()}`;
+					// 	playerAvatarElement.title = table.players[i].name;
+					// }
+				});
 				tableBody.appendChild(tableSelectionRow);
 			});
 			console.log(" ")
