@@ -165,12 +165,14 @@ export default class TableSelectionTabController extends TabController {
 		if (this.properties.sessionOwner.group === "ADMIN") return;
 
 		this.messageElement.value = "";
+		//TODO: as of now it throws the error "ReferenceError: assignment to undeclared variable response". Figure out why
 		try {
 			response = await fetch("/services/tables/"+ table.identity +"/players/" + tablePosition, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(this.properties.sessionOwner) });
 			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
-			
-			const playButton = this.tabControls.find(button => button.classList.contains("table-play"));
-			playButton.click();
+
+			//for later use I suppose
+			//const playButton = this.tabControls.find(button => button.classList.contains("table-play"));
+			//playButton.click();
 		} catch (error) {
 			this.messageElement.value = "" + (error.message || error);
 			console.log(error);
