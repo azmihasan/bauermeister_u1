@@ -42,23 +42,68 @@ export default class TableSelectionTabController extends TabController {
 	async displayTables () {
 		this.messageElement.value = ""
 		try {
-			console.log("AA")
-			//ToDo
+			const tables = await this.fetchSkatTables();
+			console.log("tables :")
+			console.log(tables)
+
+			const tableSelectionTemplate = document.querySelector("template.table-selection");
+			console.log("tableSelectionTemplate :")
+			console.log(tableSelectionTemplate)
 			const tableSelectionRowTemplate = document.querySelector("template.table-selection-row");
-			//for of loop
-			const tableSelectionRow = tableSelectionRowTemplate.content.cloneNode(true).firstElementChild;
+			console.log("tableSelectionRowTemplate :")
+			console.log(tableSelectionRowTemplate)
+			const tableBody = this.rootSection.querySelector("tbody");
+        	tableBody.innerHTML = "";
 
-			const requesterTableElement = tableSelectionRow.querySelector("img");
-			requesterTableElement.src = "/services/documents/" + "berlin.png" + "?cache-bust=" + Date.now();
-			this.rootSection.getElementsByTagName("tbody")[0].append(tableSelectionRow);
-			//for loop end
+			console.log(" ")
+			console.log("Start ForLoop Tables:")
+			console.log(" ")
 
+			tables.forEach((table) => {
+				console.log("table :")
+				console.log(table)
+
+				const tableSelectionRow = tableSelectionRowTemplate.content.cloneNode(true).firstElementChild;
+				console.log("tableSelectionRow :")
+				console.log(tableSelectionRow)
+
+				// Table avatar
+				const tableAvatarElement = tableSelectionRow.querySelector(".table");
+				console.log("tableAvatarElement :")
+				console.log(tableAvatarElement)
+				tableAvatarElement.src = `/services/documents/${table.avatar.identity}?cache-bust=${Date.now()}`;
+		
+				// TODO:
+				// Seats avatar
+	
+				tableBody.appendChild(tableSelectionRow);
+			});
+			console.log(" ")
+			console.log("Result Loop:")
+			console.log(" ")
+
+			console.log("tableBody: ")
+			console.log(tableBody)
+
+			console.log("this.rootSection")
+			console.log(this.rootSection)
+
+			console.log("this.rootSection.getElementsByTagName(tbody)[0]")
+			console.log(this.rootSection.getElementsByTagName("tbody")[0])
 		} catch (error) {
 			this.messageElement.value = "" + (error.message || error);
 			console.log(error);
 		}
 	}
 
+	async fetchSkatTables() {
+		const response = await fetch("/services/tables");
+		if (!response.ok) {
+			throw new Error("Failed to fetch Skat tables: " + response.status + " " + response.statusText);
+		}
+	
+		return await response.json();
+	}
 
 	/**
 	 * Returns a promise that resolves after the given file has been stored
