@@ -42,79 +42,64 @@ export default class TableSelectionTabController extends TabController {
 	async displayTables () {
 		this.messageElement.value = ""
 		try {
-			const tables = await this.fetchSkatTables();
-			console.log("tables :")
-			console.log(tables)
+			// fetch table
+			const response = await fetch("/services/tables");
+			if (!response.ok) {
+				throw new Error("Failed to fetch Skat tables: " + response.status + " " + response.statusText);
+			}
 
-			const tableSelectionTemplate = document.querySelector("template.table-selection");
-			console.log("tableSelectionTemplate :")
-			console.log(tableSelectionTemplate)
+			// fetch player (necessary?)
+			const responsePlayer = await fetch("/services/people");
+			if (!responsePlayer.ok) {
+				throw new Error("Failed to fetch Players: " + responsePlayer.status + " " + responsePlayer.statusText);
+			}
+
+			const players = await responsePlayer.json();
+			console.log("players :", players)
+
+			const tables = await response.json();
+			console.log("tables :", tables)
+
 			const tableSelectionRowTemplate = document.querySelector("template.table-selection-row");
-			console.log("tableSelectionRowTemplate :")
-			console.log(tableSelectionRowTemplate)
 			const tableBody = this.rootSection.querySelector("tbody");
         	tableBody.innerHTML = "";
 
-			console.log(" ")
-			console.log("Start ForLoop Tables:")
-			console.log(" ")
-
 			tables.forEach((table) => {
-				console.log("table :")
-				console.log(table)
+				console.log("table :", table)
 
 				const tableSelectionRow = tableSelectionRowTemplate.content.cloneNode(true).firstElementChild;
-				console.log("tableSelectionRow :")
-				console.log(tableSelectionRow)
+				console.log("tableSelectionRow :", tableSelectionRow)
 
 				// Table avatar
 				const tableAvatarElement = tableSelectionRow.querySelector(".table");
-				console.log("tableAvatarElement :")
-				console.log(tableAvatarElement)
 				tableAvatarElement.src = `/services/documents/${table.avatar.identity}?cache-bust=${Date.now()}`;
 				tableAvatarElement.addEventListener("drop", event => this.submitTableAvatar(table, tableAvatarElement, event.dataTransfer.files[0]));
-		
+
+				// init playerReferences
+				table.playerReferences = [null, null, null]
+
 				// Seats avatar
 				const seatClasses = ["fore", "middle", "rear"];
 				seatClasses.forEach((seatClass, i) => {
 					const playerAvatarElement = tableSelectionRow.querySelector(`.${seatClass}`);
-					playerAvatarElement.addEventListener("click", event => this.occupyTablePosition(table, i))
-					console.log("playerAvatarElement :" + i)
-					console.log(playerAvatarElement)
+					playerAvatarElement.addEventListener("click", event => {
+						this.messageElement.value = "occupyTablePosition is called";
+						this.occupyTablePosition(table, i, seatClass);
+					});
+					console.log("playerAvatarElement :" + i, playerAvatarElement)
 
 					// TODO:
-					// if (table.players[i]) {
-					// 	playerAvatarElement.src = `/services/documents/${table.players[i].avatar.identity}?cache-bust=${Date.now()}`;
-					// 	playerAvatarElement.title = table.players[i].name;
+					// if (player at position [i]) {
+					// 	playerAvatarElement.src = `/services/documents/${the_players_at_position_i.avatar.identity}?cache-bust=${Date.now()}`;
+					// 	playerAvatarElement.title = GET the_players_at_position_i name
 					// }
 				});
 				tableBody.appendChild(tableSelectionRow);
 			});
-			console.log(" ")
-			console.log("Result Loop:")
-			console.log(" ")
-
-			console.log("tableBody: ")
-			console.log(tableBody)
-
-			console.log("this.rootSection")
-			console.log(this.rootSection)
-
-			console.log("this.rootSection.getElementsByTagName(tbody)[0]")
-			console.log(this.rootSection.getElementsByTagName("tbody")[0])
 		} catch (error) {
 			this.messageElement.value = "" + (error.message || error);
 			console.log(error);
 		}
-	}
-
-	async fetchSkatTables() {
-		const response = await fetch("/services/tables");
-		if (!response.ok) {
-			throw new Error("Failed to fetch Skat tables: " + response.status + " " + response.statusText);
-		}
-	
-		return await response.json();
 	}
 
 	/**
@@ -161,18 +146,39 @@ export default class TableSelectionTabController extends TabController {
 	 * @param {Object} table the table
 	 * @param {number} tablePosition the table position
 	 */
-	async occupyTablePosition (table, tablePosition) {
+	occupyTablePosition (table, tablePosition, seatClass) {
 		if (this.properties.sessionOwner.group === "ADMIN") return;
 
 		this.messageElement.value = "";
-		//TODO: as of now it throws the error "ReferenceError: assignment to undeclared variable response". Figure out why
 		try {
-			response = await fetch("/services/tables/"+ table.identity +"/players/" + tablePosition, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(this.properties.sessionOwner) });
-			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
+			const player = this.properties.sessionOwner;
+			console.log("player:", player);
+			console.log("player identity:", player.avatar.identity);
 
-			//for later use I suppose
-			//const playButton = this.tabControls.find(button => button.classList.contains("table-play"));
-			//playButton.click();
+			// Check if the player is already seated at a table
+			if (table.playerReferences.includes(player.avatar.identity)) {
+				this.messageElement.value = "Player is already seated at a table.";
+				return;
+			}
+
+			// Check if the pos is already occupied
+			if (table.playerReferences[tablePosition]) {
+				this.messageElement.value = "Pos is already occupied.";
+				return;
+			}
+
+			// Assign the player to the specified position
+			table.playerReferences[tablePosition] = player.avatar.identity;
+
+			// Update UI
+			const playerAvatarElement = document.querySelector(`.${seatClass}`);
+			playerAvatarElement.src = `/services/documents/${player.avatar.identity}?cache-bust=${Date.now()}`;
+			playerAvatarElement.title = "OCCUPIED"; //`${player.name.family}`;
+
+			console.log("table.playerReferences: ",table.playerReferences)
+			console.log("rootSection: ", this.rootSection)
+
+			//this.rootSection.querySelector("img" + `.${seatClass}`).src = "/services/documents/" + player.avatar.identity + "?cache-bust=" + Date.now();
 		} catch (error) {
 			this.messageElement.value = "" + (error.message || error);
 			console.log(error);
