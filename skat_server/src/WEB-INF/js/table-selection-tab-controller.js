@@ -64,7 +64,7 @@ export default class TableSelectionTabController extends TabController {
 			const tableBody = this.rootSection.querySelector("tbody");
         	tableBody.innerHTML = "";
 
-			tables.forEach((table) => {
+			for (const table of tables) {
 				console.log("table :", table)
 
 				const tableSelectionRow = tableSelectionRowTemplate.content.cloneNode(true).firstElementChild;
@@ -72,30 +72,28 @@ export default class TableSelectionTabController extends TabController {
 
 				// Table avatar
 				const tableAvatarElement = tableSelectionRow.querySelector(".table");
-				tableAvatarElement.src = `/services/documents/${table.avatar.identity}?cache-bust=${Date.now()}`;
+				tableAvatarElement.src = `/services/documents/${table.avatar.identity}`;
 				tableAvatarElement.addEventListener("drop", event => this.submitTableAvatar(table, tableAvatarElement, event.dataTransfer.files[0]));
 
-				// init playerReferences
-				table.playerReferences = [null, null, null]
+				// // Seats avatar
+				const responsePromises = table.playerReferences.map(playerReference => fetch("/services/people/"+ playerReference, {method: "GET"}));
+				const responses = await Promise.all(responsePromises);
+				for (const response of responses)
+					if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
+				const players = await Promise.all(responses.map(response => response.json()));
 
-				// Seats avatar
-				const seatClasses = ["fore", "middle", "rear"];
-				seatClasses.forEach((seatClass, i) => {
-					const playerAvatarElement = tableSelectionRow.querySelector(`.${seatClass}`);
-					playerAvatarElement.addEventListener("click", event => {
-						this.messageElement.value = "occupyTablePosition is called";
-						this.occupyTablePosition(table, i, seatClass);
-					});
-					console.log("playerAvatarElement :" + i, playerAvatarElement)
+				for (let tablePosition = 0; tablePosition < 3; ++tablePosition) {
+					const player = players.find(p => p.tablePosition === tablePosition);
+					const playerAvatarElement = tableSelectionRow.children[tablePosition+1].querySelector("img");
 
-					// TODO:
-					// if (player at position [i]) {
-					// 	playerAvatarElement.src = `/services/documents/${the_players_at_position_i.avatar.identity}?cache-bust=${Date.now()}`;
-					// 	playerAvatarElement.title = GET the_players_at_position_i name
-					// }
-				});
+					playerAvatarElement.addEventListener("click", event => this.occupyTablePosition(table, tablePosition));
+					playerAvatarElement.src = player
+						? "/services/documents/" + player.avatar.identity
+						: "image/available.png";
+					playerAvatarElement.title = player ? player.name.family : "";
+				}
 				tableBody.appendChild(tableSelectionRow);
-			});
+			}
 		} catch (error) {
 			this.messageElement.value = "" + (error.message || error);
 			console.log(error);
@@ -133,6 +131,7 @@ export default class TableSelectionTabController extends TabController {
 			this.rootSection.querySelector("img.table").src = "/services/documents/" + avatarReference + "?cache-bust=" + Date.now();
 
 			this.messageElement.value = "ok.";
+			await this.displayTables();
 		} catch (error) {
 			this.messageElement.value = "" + (error.message || error);
 			console.log(error);
@@ -144,45 +143,25 @@ export default class TableSelectionTabController extends TabController {
 	 * Lets the requester occupy the given table position
 	 * using web-service calls.
 	 * @param {Object} table the table
-	 * @param {number} tablePosition the table position
 	 */
-	occupyTablePosition (table, tablePosition, seatClass) {
+	async occupyTablePosition (table, tablePosition) {
 		if (this.properties.sessionOwner.group === "ADMIN") return;
 
 		this.messageElement.value = "";
 		try {
-			const player = this.properties.sessionOwner;
-			console.log("player:", player);
-			console.log("player identity:", player.avatar.identity);
+			const response = await fetch("/services/tables/"+ table.identity +"/players/" + tablePosition, { method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify(this.properties.sessionOwner) });
+			if (!response.ok) throw new Error("HTTP " + response.status + " " + response.statusText);
+			
+			await this.displayTables();
 
-			// Check if the player is already seated at a table
-			if (table.playerReferences.includes(player.avatar.identity)) {
-				this.messageElement.value = "Player is already seated at a table.";
-				return;
-			}
-
-			// Check if the pos is already occupied
-			if (table.playerReferences[tablePosition]) {
-				this.messageElement.value = "Pos is already occupied.";
-				return;
-			}
-
-			// Assign the player to the specified position
-			table.playerReferences[tablePosition] = player.avatar.identity;
-
-			// Update UI
-			const playerAvatarElement = document.querySelector(`.${seatClass}`);
-			playerAvatarElement.src = `/services/documents/${player.avatar.identity}?cache-bust=${Date.now()}`;
-			playerAvatarElement.title = "OCCUPIED"; //`${player.name.family}`;
-
-			console.log("table.playerReferences: ",table.playerReferences)
-			console.log("rootSection: ", this.rootSection)
-
-			//this.rootSection.querySelector("img" + `.${seatClass}`).src = "/services/documents/" + player.avatar.identity + "?cache-bust=" + Date.now();
+			//loop while not all positions are occupied. when all are occupied, click the play button.
 		} catch (error) {
 			this.messageElement.value = "" + (error.message || error);
 			console.log(error);
 		}
+
+		const playButton = this.tabControls.find(button => button.classList.contains("table-play"));
+		playButton.click();
 	}
 }
 

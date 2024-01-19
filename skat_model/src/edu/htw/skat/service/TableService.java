@@ -157,7 +157,7 @@ public class TableService {
 	@Produces(TEXT_PLAIN)
 	public byte addPlayerToTable(
 		@PathParam("id") @Positive final long skatTableIdentity,
-		@PathParam("tablePosition") @Min(0) @Max(2) final byte position,
+		@PathParam("pos") @Min(0) @Max(2) final byte position,
 		@HeaderParam(REQUESTER_IDENTITY) @Positive final long requesterIdentity
 	) {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
