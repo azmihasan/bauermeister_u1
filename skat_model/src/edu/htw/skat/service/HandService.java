@@ -301,20 +301,28 @@ public class HandService {
 		
 		Trick gameTrick = game.getTricks().stream().max(Comparator.comparing(Trick::getIdentity)).orElse(null);
 		if (gameTrick.getFirstCard() == null) {
-			//TODO: check if it is the players turn to play the first card
-			gameTrick.setFirstCard(card);
+			// TODO: check if it is the players turn to play the first card
+		    if (game.getForehand() != hand) {
+		    	throw new ClientErrorException(CONFLICT);
+		    }
+		    gameTrick.setFirstCard(card);
 		} else if (gameTrick.getSecondCard() == null) {
-			//TODO: check if it is the players turn to play the second card
-			gameTrick.setSecondCard(card);
+			// TODO: check if it is the players turn to play the second card
+		    if (game.getMiddlehand() != hand) {
+		    	throw new ClientErrorException(CONFLICT);
+		    }
+		    gameTrick.setSecondCard(card);
 		} else if (gameTrick.getThirdCard() == null) {
-			//TODO: check if it is the players turn to play the third card
-			// check which player win the trick?
-			// if the 10th trick of this game, then the game is over. The winner must be determined by amount of player point. The game state should be "DONE".
-			gameTrick.setThirdCard(card);
-			//gameTrick.setWinner();
-			
+			// TODO: check if it is the players turn to play the third card
+			// TODO: check which player win the trick?
+			// TODO: if the 10th trick of this game, then the game is over. The winner must be determined by amount of player point. The game state should be "DONE".
+			// TODO: gameTrick.setWinner();
+			if (game.getRearhand() != hand) {
+		    	throw new ClientErrorException(CONFLICT);
+		    }
+		    gameTrick.setThirdCard(card);
 		} else {
-			//TODO: check if it is the players turn to play the first card
+			// TODO: check if it is the players turn to play the first card
 			final Position position = game.getForehand() == hand
 					? Position.FOREHAND
 					: (game.getMiddlehand() == hand ? Position.MIDDLEHAND : Position.REARHAND);
@@ -334,6 +342,24 @@ public class HandService {
 			
 			gameTrick.setFirstCard(card);
 		}
+		
+		final Card firstCard = gameTrick.getFirstCard();
+        final Card secondCard = gameTrick.getSecondCard();
+        final Card thirdCard = gameTrick.getThirdCard();
+
+        Position winnerPosition;
+        if (firstCard.getPoints() > secondCard.getPoints()) {
+            winnerPosition = Position.FOREHAND;
+        } else if (secondCard.getPoints() > thirdCard.getPoints()) {
+            winnerPosition = Position.MIDDLEHAND;
+        } else {
+            winnerPosition = Position.REARHAND;
+        }
+        
+       if (game.getTricks().size() >= 10) {
+            game.setState(State.DONE);
+            gameTrick.setWinner(winnerPosition);
+        }
 		
 		try {
 			entityManager.flush();
