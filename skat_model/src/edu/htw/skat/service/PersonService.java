@@ -168,7 +168,8 @@ public class PersonService {
 		final EntityManager entityManager = RestJpaLifecycleProvider.entityManager("skat");
 		final long identity = personIdentity == 0 ? requesterIdentity : personIdentity;
 		final Person person = entityManager.find(Person.class, identity);
-		if (person == null) throw new ClientErrorException(NOT_FOUND);
+		if (person == null)
+			throw new ClientErrorException(NOT_FOUND);
 
 		return person;	
 	}
